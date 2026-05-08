@@ -1,0 +1,9 @@
+{
+    "ref_prefix": "SUNN",
+    "token_expiry_days": 30,
+    "default_role": "external",
+    "allow_external_signers": "0",
+    "force_password_change": "0",
+    "mail_from_name": "SUNN SIGN",
+    "mail_from_email": "arcillasivan33@gmail.com"
+}

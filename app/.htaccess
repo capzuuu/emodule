@@ -1,0 +1,7 @@
+# Deny all direct HTTP access to the app directory
+Order deny,allow
+Deny from all
+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
