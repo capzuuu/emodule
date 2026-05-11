@@ -64,14 +64,23 @@ class Student extends Model
             SELECT m.id, m.title, m.outcome, m.content, m.unit_number, m.file_path,
                    COALESCE(up.status, 'not_started') AS db_status,
                    COALESCE(up.quiz_score, 0)          AS quiz_score,
+                   COALESCE(up.quiz_attempts, 0)        AS quiz_attempts,
                    up.completed_date,
                    (SELECT COUNT(*) FROM quiz_questions WHERE module_id = m.id AND test_type = 'pre')  AS pre_count,
-                   (SELECT COUNT(*) FROM quiz_questions WHERE module_id = m.id AND test_type = 'post') AS post_count
+                   (SELECT COUNT(*) FROM quiz_questions WHERE module_id = m.id AND test_type = 'post') AS post_count,
+                   (SELECT SUM(qa.answer = qq.correct_answer)
+                    FROM quiz_answers qa
+                    JOIN quiz_questions qq ON qq.id = qa.question_id
+                    WHERE qa.user_id = ? AND qa.module_id = m.id AND qa.test_type = 'pre') AS pre_correct,
+                   (SELECT SUM(qa.answer = qq.correct_answer)
+                    FROM quiz_answers qa
+                    JOIN quiz_questions qq ON qq.id = qa.question_id
+                    WHERE qa.user_id = ? AND qa.module_id = m.id AND qa.test_type = 'post') AS post_correct
             FROM modules m
             LEFT JOIN user_progress up ON up.module_id = m.id AND up.user_id = ?
             WHERE m.teacher_id = ?
             ORDER BY m.id ASC
-        ", [$userId, $teacherUserId])->fetchAll(\PDO::FETCH_ASSOC);
+        ", [$userId, $userId, $userId, $teacherUserId])->fetchAll(\PDO::FETCH_ASSOC);
 
         // Re-index to guarantee 0-based sequential keys
         $modules = array_values($modules);
@@ -151,6 +160,13 @@ class Student extends Model
             "SELECT * FROM modules WHERE id = ? LIMIT 1",
             [$moduleId]
         )->fetch(\PDO::FETCH_ASSOC);
+        if ($row) {
+            $rate = $this->query(
+                "SELECT passing_rate FROM quiz_questions WHERE module_id = ? AND test_type = 'post' LIMIT 1",
+                [$moduleId]
+            )->fetchColumn();
+            $row['passing_rate'] = $rate !== false ? (int)$rate : 50;
+        }
         return $row ?: null;
     }
 
@@ -182,6 +198,15 @@ class Student extends Model
             VALUES (?, ?, 'available')
             ON DUPLICATE KEY UPDATE
                 status = IF(status = 'locked' OR status = 'available', 'available', status)
+        ", [$userId, $moduleId]);
+    }
+
+    public function incrementPostAttempt(int $userId, int $moduleId): void
+    {
+        $this->query("
+            INSERT INTO user_progress (user_id, module_id, status, quiz_attempts)
+            VALUES (?, ?, 'available', 1)
+            ON DUPLICATE KEY UPDATE quiz_attempts = quiz_attempts + 1
         ", [$userId, $moduleId]);
     }
 
@@ -234,6 +259,16 @@ class Student extends Model
         }
     }
 
+    public function clearAnswers(int $userId, int $moduleId, string $testType): void
+    {
+        try {
+            $this->query(
+                "DELETE FROM quiz_answers WHERE user_id = ? AND module_id = ? AND test_type = ?",
+                [$userId, $moduleId, $testType]
+            );
+        } catch (\Exception $e) {}
+    }
+
     public function getAnswers(int $userId, int $moduleId, string $testType): array
     {
         // Return empty if table doesn't exist yet
@@ -245,6 +280,52 @@ class Student extends Model
             )->fetchAll(\PDO::FETCH_KEY_PAIR);
         } catch (\Exception $e) {
             return [];
+        }
+    }
+
+    public function isLessonDone(int $userId, int $moduleId): bool
+    {
+        try {
+            $this->db->exec("
+                CREATE TABLE IF NOT EXISTS lesson_progress (
+                    id         INT PRIMARY KEY AUTO_INCREMENT,
+                    user_id    INT NOT NULL,
+                    module_id  INT NOT NULL,
+                    done_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY unique_lesson (user_id, module_id),
+                    FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+                    FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
+            return (bool)$this->query(
+                "SELECT COUNT(*) FROM lesson_progress WHERE user_id = ? AND module_id = ?",
+                [$userId, $moduleId]
+            )->fetchColumn();
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    public function setLessonDone(int $userId, int $moduleId): void
+    {
+        try {
+            $this->db->exec("
+                CREATE TABLE IF NOT EXISTS lesson_progress (
+                    id         INT PRIMARY KEY AUTO_INCREMENT,
+                    user_id    INT NOT NULL,
+                    module_id  INT NOT NULL,
+                    done_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY unique_lesson (user_id, module_id),
+                    FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+                    FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
+            $this->query(
+                "INSERT IGNORE INTO lesson_progress (user_id, module_id) VALUES (?, ?)",
+                [$userId, $moduleId]
+            );
+        } catch (\Exception $e) {
+            // silently fail
         }
     }
 

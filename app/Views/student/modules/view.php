@@ -111,18 +111,52 @@
           </div>
         </div>
 
+        <?php
+          $lessonUnlocked = $status === 'completed' || $preDone || empty($preQuestions);
+          $postUnlocked   = $status === 'completed' || $lessonDone;
+          // Default active tab
+          if ($status === 'completed') {
+            $activeTab = 'pretest';
+          } elseif (!empty($preQuestions)) {
+            $activeTab = 'pretest';
+          } else {
+            $activeTab = 'content';
+          }
+        ?>
+
         <div class="module-tabs">
-          <button class="module-tab active" data-tab="content"><i class="bi bi-book"></i> Lesson</button>
           <?php if (!empty($preQuestions)): ?>
-          <button class="module-tab" data-tab="pretest"><i class="bi bi-clipboard-check"></i> Pre-Test <span class="tab-count"><?= count($preQuestions) ?>Q</span></button>
+          <button class="module-tab <?= $activeTab === 'pretest' ? 'active' : '' ?>"
+                  data-tab="pretest" id="tab-btn-pretest">
+            <i class="bi bi-clipboard-check"></i> Pre-Test
+            <span class="tab-count"><?= count($preQuestions) ?>Q</span>
+          </button>
           <?php endif; ?>
+
+          <button class="module-tab <?= $activeTab === 'content' ? 'active' : '' ?>"
+                  data-tab="content" id="tab-btn-content"
+                  <?= !$lessonUnlocked ? 'data-locked="1"' : '' ?>>
+            <i class="bi bi-book"></i> Lesson
+            <?php if (!$lessonUnlocked): ?>
+              <span style="font-size:.6rem;opacity:.55;margin-left:2px;"><i class="bi bi-lock-fill"></i></span>
+            <?php endif; ?>
+          </button>
+
           <?php if (!empty($postQuestions)): ?>
-          <button class="module-tab" data-tab="posttest"><i class="bi bi-clipboard-data"></i> Post-Test <span class="tab-count"><?= count($postQuestions) ?>Q</span></button>
+          <button class="module-tab"
+                  data-tab="posttest" id="tab-btn-posttest"
+                  <?= !$postUnlocked ? 'data-locked="1"' : '' ?>>
+            <i class="bi bi-clipboard-data"></i> Post-Test
+            <span class="tab-count"><?= count($postQuestions) ?>Q</span>
+            <?php if (!$postUnlocked): ?>
+              <span style="font-size:.6rem;opacity:.55;margin-left:2px;"><i class="bi bi-lock-fill"></i></span>
+            <?php endif; ?>
+          </button>
           <?php endif; ?>
         </div>
 
         <!-- LESSON TAB -->
-        <div id="tab-content" class="tab-pane-custom">
+        <div id="tab-content" class="tab-pane-custom" <?= $activeTab !== 'content' ? 'style="display:none;"' : '' ?>>
           <div class="lesson-card">
             <?php if (!empty($module['outcome'])): ?>
               <div class="lesson-outcome-box">
@@ -167,12 +201,38 @@
             <?php if (!empty($module['content'])): ?>
               <div style="white-space:pre-wrap;line-height:1.85;font-size:.9rem;"><?= nl2br(htmlspecialchars($module['content'])) ?></div>
             <?php endif; ?>
+
+            <?php if ($status !== 'completed' && !empty($postQuestions)): ?>
+              <div class="mt-4 pt-3" style="border-top:1.5px solid #e8f0e9;">
+                <?php if ($lessonDone): ?>
+                  <div class="d-flex align-items-center gap-2" style="gap:10px;">
+                    <span style="display:inline-flex;align-items:center;gap:6px;background:#d1fae5;color:#059669;font-size:.82rem;font-weight:700;padding:8px 18px;border-radius:10px;">
+                      <i class="bi bi-check-circle-fill"></i> Lesson completed — Post-Test is now unlocked
+                    </span>
+                    <button class="btn btn-success font-weight-bold" id="goToPostBtn" style="border-radius:10px;">
+                      <i class="bi bi-arrow-right mr-1"></i> Go to Post-Test
+                    </button>
+                  </div>
+                <?php else: ?>
+                  <div class="d-flex align-items-center" style="gap:12px;flex-wrap:wrap;">
+                    <div style="font-size:.82rem;color:#5C6359;">
+                      <i class="bi bi-info-circle mr-1" style="color:#258517;"></i>
+                      Read through the lesson, then mark it as done to unlock the Post-Test.
+                    </div>
+                    <button class="btn btn-success font-weight-bold" id="markLessonDoneBtn" style="border-radius:10px;white-space:nowrap;">
+                      <i class="bi bi-check-lg mr-1"></i> Mark Lesson as Done
+                    </button>
+                  </div>
+                <?php endif; ?>
+              </div>
+            <?php endif; ?>
+
           </div>
         </div>
 
         <!-- PRE-TEST TAB -->
         <?php if (!empty($preQuestions)): ?>
-        <div id="tab-pretest" class="tab-pane-custom" style="display:none;">
+        <div id="tab-pretest" class="tab-pane-custom">
           <?php if ($status === 'completed'): ?>
             <div class="quiz-card">
               <div class="quiz-header">
@@ -351,16 +411,69 @@
 <?php student_view_layout(['script']); ?>
 <script nonce="<?= csp_nonce() ?>">
 var notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'bottom' } });
-var moduleId = <?= (int)$module['id'] ?>;
+var moduleId    = <?= (int)$module['id'] ?>;
+var lessonDone  = <?= $lessonDone  ? 'true' : 'false' ?>;
+var preDone     = <?= $preDone     ? 'true' : 'false' ?>;
+var hasPost     = <?= !empty($postQuestions) ? 'true' : 'false' ?>;
+var hasPre      = <?= !empty($preQuestions)  ? 'true' : 'false' ?>;
 
 $(document).ready(function () {
+
+  // ── Tab switching — respect locked state ──
   $('.module-tab').on('click', function () {
-    $('.module-tab').removeClass('active');
-    $(this).addClass('active');
-    $('.tab-pane-custom').hide();
-    $('#tab-' + $(this).data('tab')).show();
+    if ($(this).data('locked')) {
+      var tab = $(this).data('tab');
+      if (tab === 'content') {
+        notyf.error('Complete the Pre-Test first to unlock the Lesson.');
+      } else if (tab === 'posttest') {
+        notyf.error('Mark the Lesson as done first to unlock the Post-Test.');
+      }
+      return;
+    }
+    switchTab($(this).data('tab'));
   });
 
+  function switchTab(tab) {
+    $('.module-tab').removeClass('active');
+    $('.module-tab[data-tab="' + tab + '"]').addClass('active');
+    $('.tab-pane-custom').hide();
+    $('#tab-' + tab).show();
+  }
+
+  // ── Go to Post-Test button ──
+  $(document).on('click', '#goToPostBtn', function () {
+    switchTab('posttest');
+  });
+
+  // ── Mark Lesson as Done ──
+  $(document).on('click', '#markLessonDoneBtn', function () {
+    var $btn = $(this).html('<span class="spinner-border spinner-border-sm mr-1"></span> Saving...').prop('disabled', true);
+    $.ajax({
+      url: '<?= baseurl('/student/api/lesson/done') ?>', type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ module_id: moduleId }),
+      dataType: 'json',
+      success: function (res) {
+        if (!res.success) { notyf.error('Could not save. Try again.'); $btn.html('<i class="bi bi-check-lg mr-1"></i> Mark Lesson as Done').prop('disabled', false); return; }
+        lessonDone = true;
+        // Unlock post-test tab
+        $('#tab-btn-posttest').removeAttr('data-locked').find('span:last-child').remove();
+        // Replace button with done state
+        $btn.closest('div.d-flex').html(
+          '<span style="display:inline-flex;align-items:center;gap:6px;background:#d1fae5;color:#059669;font-size:.82rem;font-weight:700;padding:8px 18px;border-radius:10px;">' +
+            '<i class="bi bi-check-circle-fill"></i> Lesson completed — Post-Test is now unlocked' +
+          '</span>' +
+          '<button class="btn btn-success font-weight-bold" id="goToPostBtn" style="border-radius:10px;">' +
+            '<i class="bi bi-arrow-right mr-1"></i> Go to Post-Test' +
+          '</button>'
+        );
+        notyf.success('Lesson marked as done. Post-Test is now unlocked!');
+      },
+      error: function () { notyf.error('Server error.'); $btn.html('<i class="bi bi-check-lg mr-1"></i> Mark Lesson as Done').prop('disabled', false); }
+    });
+  });
+
+  // ── Option selection ──
   $(document).on('click', '.option-row', function () {
     if ($(this).hasClass('correct') || $(this).hasClass('wrong')) return;
     var $card = $(this).closest('.question-card');
@@ -380,6 +493,7 @@ $(document).ready(function () {
       answers[qid] = sel;
     });
     if (!allAnswered) { notyf.error('Please answer all questions before submitting.'); return; }
+
     var $btn = $('#' + btnId).html('<span class="spinner-border spinner-border-sm mr-1"></span> Submitting...').prop('disabled', true);
     $.ajax({
       url: '<?= baseurl('/student/api/test/submit') ?>', type: 'POST',
@@ -388,20 +502,43 @@ $(document).ready(function () {
       dataType: 'json',
       success: function (res) {
         if (!res.success) { notyf.error(res.message); return; }
-        var passed = res.score >= 50;
+        var passed = res.passed !== undefined ? res.passed : (res.score >= 50);
+
         $('#' + containerId + ' .option-row').css('pointer-events', 'none');
         $('#' + btnId).hide();
+
+        // After pre-test: unlock lesson tab
+        if (testType === 'pre') {
+          preDone = true;
+          $('#tab-btn-content').removeAttr('data-locked').find('span:last-child').remove();
+        }
+
+        var passingInfo = res.passing_rate ? ' · Passing: ' + res.passing_rate + '%' : '';
+        var retryBtn = '<button class="quiz-submit-btn" style="max-width:200px;margin:0 auto;" id="retryPostBtn"><i class="bi bi-arrow-clockwise"></i> Try Again</button>';
+
         $('#' + resultId).html(
           '<div class="result-overlay">' +
             '<div class="result-score-circle ' + (passed ? 'pass' : 'fail') + '">' + res.score + '%</div>' +
             '<h5 class="font-weight-bold mb-1">' + (passed ? '🎉 Well done!' : '📝 Keep trying!') + '</h5>' +
-            '<div class="text-muted mb-3" style="font-size:.85rem;">' + res.correct + ' out of ' + res.total + ' correct</div>' +
-            (passed && testType === 'post'
-              ? '<a href="<?= baseurl('/student/modules') ?>" class="quiz-submit-btn" style="max-width:260px;margin:0 auto;text-decoration:none;"><i class="bi bi-arrow-right"></i> Continue</a>'
-              : '<button class="quiz-submit-btn" style="max-width:200px;margin:0 auto;" onclick="$(\'#' + resultId + '\').hide();$(\'#' + btnId + '\').show().prop(\'disabled\',false).html(\'<i class=\\\"bi bi-send\\\"></i> Retry\');"><i class="bi bi-arrow-clockwise"></i> Try Again</button>'
+            '<div class="text-muted mb-3" style="font-size:.85rem;">' + res.correct + ' out of ' + res.total + ' correct' + passingInfo + '</div>' +
+            (testType === 'pre'
+              ? '<button class="quiz-submit-btn" style="max-width:240px;margin:0 auto;" id="goToLessonBtn"><i class="bi bi-book mr-1"></i> Go to Lesson</button>'
+              : (passed
+                  ? '<a href="<?= baseurl('/student/modules') ?>" class="quiz-submit-btn" style="max-width:260px;margin:0 auto;text-decoration:none;"><i class="bi bi-arrow-right"></i> Continue</a>'
+                  : retryBtn
+                )
             ) +
           '</div>'
         );
+
+        // Retry post-test: reset all options and re-enable
+        $(document).off('click', '#retryPostBtn').on('click', '#retryPostBtn', function () {
+          $('#' + resultId).hide();
+          $('#' + containerId + ' .question-card').removeClass('answered');
+          $('#' + containerId + ' .option-row').removeClass('selected correct wrong').css('pointer-events', '');
+          $('#' + containerId + ' .quiz-dot').removeClass('answered');
+          $('#' + btnId).show().prop('disabled', false).html('<i class="bi bi-send"></i> Submit Post-Test');
+        });
         notyf.success(res.score + '% — ' + (passed ? 'Passed!' : 'Keep going!'));
       },
       error: function () { notyf.error('Server error.'); },
@@ -410,6 +547,11 @@ $(document).ready(function () {
       }
     });
   }
+
+  // Go to Lesson after pre-test
+  $(document).on('click', '#goToLessonBtn', function () {
+    switchTab('content');
+  });
 
   $('#submitPreBtn').on('click',  function () { submitTest('pre',  'submitPreBtn',  'pretest-questions',  'pre-result'); });
   $('#submitPostBtn').on('click', function () { submitTest('post', 'submitPostBtn', 'posttest-questions', 'post-result'); });

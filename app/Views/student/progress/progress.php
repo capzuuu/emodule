@@ -81,16 +81,14 @@
                   <th>Unit</th>
                   <th>Title</th>
                   <th>Status</th>
-                  <th>Score</th>
+                  <th>Pre-Test Score</th>
+                  <th>Post-Test Score</th>
+                  <th>Attempts</th>
                   <th>Completed</th>
-                  <th style="min-width:160px;">Progress</th>
                 </tr>
               </thead>
               <tbody>
-                <?php foreach ($modules as $m):
-                  $pct   = $m['status'] === 'completed' ? 100 : ($m['status'] === 'available' ? 50 : 0);
-                  $color = $m['status'] === 'completed' ? '#059669' : ($m['status'] === 'available' ? '#258517' : '#9ca3af');
-                ?>
+                <?php foreach ($modules as $m): ?>
                   <tr>
                     <td><span class="badge badge-secondary">Unit <?= $m['unit_number'] ?></span></td>
                     <td class="font-weight-bold"><?= htmlspecialchars($m['title']) ?></td>
@@ -104,8 +102,22 @@
                       <?php endif; ?>
                     </td>
                     <td>
-                      <?php if ($m['status'] === 'completed'): ?>
-                        <span class="font-weight-bold" style="color:#059669;"><?= $m['quiz_score'] ?>%</span>
+                      <?php if ($m['pre_correct'] !== null): ?>
+                        <span class="font-weight-bold" style="color:#4e73df;"><?= (int)$m['pre_correct'] ?>/<?= (int)$m['pre_count'] ?></span>
+                      <?php else: ?>
+                        <span class="text-muted">—</span>
+                      <?php endif; ?>
+                    </td>
+                    <td>
+                      <?php if ($m['post_correct'] !== null): ?>
+                        <span class="font-weight-bold" style="color:<?= $m['status'] === 'completed' ? '#059669' : '#e65100' ?>"><?= (int)$m['post_correct'] ?>/<?= (int)$m['post_count'] ?></span>
+                      <?php else: ?>
+                        <span class="text-muted">—</span>
+                      <?php endif; ?>
+                    </td>
+                    <td>
+                      <?php if ($m['quiz_attempts'] > 0): ?>
+                        <span class="font-weight-bold" style="color:#f6c23e;"><?= $m['quiz_attempts'] ?></span>
                       <?php else: ?>
                         <span class="text-muted">—</span>
                       <?php endif; ?>
@@ -113,18 +125,10 @@
                     <td class="text-muted" style="font-size:.78rem;">
                       <?= $m['completed_date'] ? date('M d, Y', strtotime($m['completed_date'])) : '—' ?>
                     </td>
-                    <td>
-                      <div class="d-flex align-items-center" style="gap:8px;">
-                        <div class="progress flex-grow-1" style="height:8px;border-radius:99px;">
-                          <div class="progress-bar" style="width:<?= $pct ?>%;background:<?= $color ?>;"></div>
-                        </div>
-                        <small class="font-weight-bold" style="color:<?= $color ?>;min-width:32px;"><?= $pct ?>%</small>
-                      </div>
-                    </td>
                   </tr>
                 <?php endforeach; ?>
                 <?php if (empty($modules)): ?>
-                  <tr><td colspan="6" class="text-center text-muted py-4">No modules available yet.</td></tr>
+                  <tr><td colspan="7" class="text-center text-muted py-4">No modules available yet.</td></tr>
                 <?php endif; ?>
               </tbody>
             </table>

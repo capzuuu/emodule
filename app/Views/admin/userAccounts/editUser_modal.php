@@ -24,13 +24,7 @@
             <input type="email" class="form-control" name="email" id="editEmail" required>
           </div>
 
-          <div class="form-group mb-0">
-            <label class="font-weight-bold" style="font-size:.82rem;">Role</label>
-            <select class="form-control" name="role" id="editRole" required>
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
-            </select>
-          </div>
+          <input type="hidden" name="role" value="teacher">
 
         </div>
 
@@ -53,19 +47,17 @@ $(function () {
 
   function checkForm() {
     var ok = $.trim($('#editName').val()) !== '' &&
-             $.trim($('#editEmail').val()) !== '' &&
-             $.trim($('#editRole').val()) !== '';
+             $.trim($('#editEmail').val()) !== '';
     $btn.prop('disabled', !ok);
   }
 
-  $form.on('input change', 'input, select', checkForm);
+  $form.on('input change', 'input', checkForm);
 
   $('#editUserModal').on('show.bs.modal', function (e) {
     var b = $(e.relatedTarget);
     $('#editUserId').val(b.data('id'));
     $('#editName').val(b.data('name'));
     $('#editEmail').val(b.data('email'));
-    $('#editRole').val(b.data('role'));
     checkForm();
   });
 

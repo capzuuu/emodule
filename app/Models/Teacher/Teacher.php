@@ -121,6 +121,23 @@ class Teacher extends Model
         return ['pre' => $pre, 'post' => $post];
     }
 
+    public function getPassingRate(int $moduleId): int
+    {
+        $val = $this->query(
+            "SELECT passing_rate FROM quiz_questions WHERE module_id = ? AND test_type = 'post' LIMIT 1",
+            [$moduleId]
+        )->fetchColumn();
+        return $val !== false ? (int)$val : 50;
+    }
+
+    public function savePassingRate(int $moduleId, int $rate): void
+    {
+        $this->query(
+            "UPDATE quiz_questions SET passing_rate = ? WHERE module_id = ? AND test_type = 'post'",
+            [max(1, min(100, $rate)), $moduleId]
+        );
+    }
+
     public function saveQuestions(int $moduleId, string $testType, array $questions): void
     {
         $this->query("DELETE FROM quiz_questions WHERE module_id = ? AND test_type = ?", [$moduleId, $testType]);

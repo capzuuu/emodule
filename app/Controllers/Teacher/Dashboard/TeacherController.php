@@ -200,22 +200,43 @@ class TeacherController extends Controller
         $testType = $_GET['test_type'] ?? '';
         if (!$moduleId) { json_response(['success' => false, 'message' => 'Invalid module ID.']); return; }
 
+        // Verify this module belongs to the requesting teacher
+        if (!$this->model->getModuleById($moduleId, $this->userId)) {
+            json_response(['success' => false, 'message' => 'Access denied.']);
+            return;
+        }
+
         if ($testType && in_array($testType, ['pre', 'post'])) {
-            json_response(['success' => true, 'questions' => $this->model->getQuestions($moduleId, $testType)]);
+            json_response([
+                'success'      => true,
+                'questions'    => $this->model->getQuestions($moduleId, $testType),
+                'passing_rate' => $this->model->getPassingRate($moduleId),
+            ]);
         } else {
-            json_response(['success' => true, 'counts' => $this->model->getQuestionCounts($moduleId)]);
+            json_response([
+                'success'      => true,
+                'counts'       => $this->model->getQuestionCounts($moduleId),
+                'passing_rate' => $this->model->getPassingRate($moduleId),
+            ]);
         }
     }
 
     public function questionsSave()
     {
         $input     = json_decode(file_get_contents('php://input'), true);
-        $moduleId  = (int)($input['module_id']  ?? 0);
-        $testType  = $input['test_type']         ?? '';
-        $questions = $input['questions']         ?? [];
+        $moduleId  = (int)($input['module_id']   ?? 0);
+        $testType  = $input['test_type']          ?? '';
+        $questions = $input['questions']          ?? [];
+        $passingRate = isset($input['passing_rate']) ? (int)$input['passing_rate'] : null;
 
         if (!$moduleId || !in_array($testType, ['pre', 'post'])) {
             json_response(['success' => false, 'message' => 'Invalid module ID or test type.']);
+            return;
+        }
+
+        // Verify this module belongs to the requesting teacher
+        if (!$this->model->getModuleById($moduleId, $this->userId)) {
+            json_response(['success' => false, 'message' => 'Access denied.']);
             return;
         }
 
@@ -228,6 +249,12 @@ class TeacherController extends Controller
         }
 
         $this->model->saveQuestions($moduleId, $testType, $questions);
+
+        // Save passing rate only for post-test
+        if ($testType === 'post' && $passingRate !== null) {
+            $this->model->savePassingRate($moduleId, $passingRate);
+        }
+
         json_response(['success' => true, 'message' => ucfirst($testType) . '-test saved successfully.']);
     }
 
@@ -279,6 +306,50 @@ class TeacherController extends Controller
         }
 
         json_response(['success' => true, 'message' => 'Student assigned successfully.']);
+    }
+
+    public function studentCreateNew()
+    {
+        $input     = json_decode(file_get_contents('php://input'), true);
+        $name      = trim($input['name']     ?? '');
+        $email     = trim($input['email']    ?? '');
+        $password  = $input['password']      ?? '';
+        $gradeId   = (int)($input['grade_id']   ?? 0) ?: null;
+        $sectionId = (int)($input['section_id'] ?? 0) ?: null;
+
+        if (!$name || !$email || !$password) {
+            json_response(['success' => false, 'message' => 'Name, email and password are required.']);
+            return;
+        }
+
+        if (strlen($password) < 6) {
+            json_response(['success' => false, 'message' => 'Password must be at least 6 characters.']);
+            return;
+        }
+
+        if ($this->model->isEmailExists($email)) {
+            json_response(['success' => false, 'message' => 'Email already exists.']);
+            return;
+        }
+
+        if (!$this->teacherId) {
+            $this->teacherId = $this->model->ensureTeacherRecord($this->userId);
+        }
+
+        if (!$this->teacherId) {
+            json_response(['success' => false, 'message' => 'Unable to resolve teacher profile.']);
+            return;
+        }
+
+        $this->model->createStudent([
+            'name'       => $name,
+            'email'      => $email,
+            'password'   => password_hash($password, PASSWORD_DEFAULT),
+            'grade_id'   => $gradeId,
+            'section_id' => $sectionId,
+        ], $this->teacherId);
+
+        json_response(['success' => true, 'message' => 'Student account created and assigned successfully.']);
     }
 
     public function studentEdit()

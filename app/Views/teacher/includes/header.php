@@ -16,5 +16,6 @@
   <link href="<?= asset('dist/assets/icons/bootstrap-icons.css') ?>" rel="stylesheet">
   <link href="<?= asset('dist/assets/css/notyf.min.css') ?>" rel="stylesheet">
   <link href="<?= asset('dist/assets/css/dataTables.bootstrap4.min.css') ?>" rel="stylesheet">
+  <link href="<?= asset('dist/assets/css/responsive.bootstrap4.min.css') ?>" rel="stylesheet">
   <link rel="icon" type="image/png" href="<?= asset('dist/assets/img/Rizal_logo.png') ?>">
 </head>

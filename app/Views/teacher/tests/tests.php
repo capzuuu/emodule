@@ -29,6 +29,7 @@
                       <th>Module Title</th>
                       <th>Pre-Test</th>
                       <th>Post-Test</th>
+                      <th>Passing Rate</th>
                       <th style="width:80px;">Actions</th>
                     </tr>
                   </thead>
@@ -40,6 +41,7 @@
                         <td class="font-weight-bold"><?= htmlspecialchars($m['title']) ?></td>
                         <td id="pre-count-<?= $m['id'] ?>"><span class="badge badge-secondary">Loading…</span></td>
                         <td id="post-count-<?= $m['id'] ?>"><span class="badge badge-secondary">Loading…</span></td>
+                        <td id="passing-rate-<?= $m['id'] ?>"><span class="text-muted">—</span></td>
                         <td>
                           <button class="btn btn-sm btn-light btn-quiz"
                                   data-id="<?= $m['id'] ?>"
@@ -90,6 +92,25 @@
             </a>
           </li>
         </ul>
+
+        <!-- Passing rate — only shown on Post-Test tab -->
+        <div id="passingRateWrap" class="mb-3 p-3 rounded" style="background:#f0fdf4;border:1.5px solid #a7f3d0;display:none;">
+          <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap:12px;">
+            <div>
+              <div class="font-weight-bold" style="font-size:.82rem;color:#065f46;">
+                <i class="bi bi-trophy-fill mr-1" style="color:#059669;"></i>Passing Rate
+              </div>
+              <div class="text-muted" style="font-size:.72rem;">Minimum score (%) a student needs to pass this post-test.</div>
+            </div>
+            <div class="d-flex align-items-center" style="gap:10px;">
+              <input type="number" id="passingRateInput" class="form-control form-control-sm"
+                     min="1" max="100" value="50"
+                     style="width:80px;font-weight:700;font-size:.9rem;text-align:center;border-color:#a7f3d0;">
+              <span style="font-size:.82rem;font-weight:700;color:#059669;">%</span>
+            </div>
+          </div>
+        </div>
+
         <div id="quizQuestionsContainer"></div>
         <button type="button" class="btn btn-outline-success btn-sm mt-2" id="addQuestionBtn">
           <i class="bi bi-plus mr-1"></i>Add Question
@@ -118,8 +139,10 @@ $(document).ready(function () {
     if(!res.success) return;
     var pre  = res.counts ? res.counts.pre  : 0;
     var post = res.counts ? res.counts.post : 0;
+    var rate = res.passing_rate !== undefined ? res.passing_rate : 50;
     $('#pre-count-<?= $m['id'] ?>').html('<span class="badge ' + (pre  > 0 ? 'badge-success' : 'badge-secondary') + '">' + pre  + ' Q</span>');
     $('#post-count-<?= $m['id'] ?>').html('<span class="badge ' + (post > 0 ? 'badge-info'    : 'badge-secondary') + '">' + post + ' Q</span>');
+    $('#passing-rate-<?= $m['id'] ?>').html('<span class="badge" style="background:#d1fae5;color:#059669;font-weight:700;">' + rate + '%</span>');
   }, 'json');
   <?php endforeach; ?>
 
@@ -143,6 +166,8 @@ $(document).ready(function () {
     $('#quizTabs a').removeClass('active');
     $(this).addClass('active');
     loadQuestions($('#quizModuleId').val(), currentQuizType);
+    // Show passing rate only on post-test tab
+    $('#passingRateWrap').toggle(currentQuizType === 'post');
   });
 
   function loadQuestions(moduleId, testType){
@@ -150,6 +175,10 @@ $(document).ready(function () {
     $.get('<?= baseurl('/teacher/api/questions') ?>', { module_id: moduleId, test_type: testType }, function(res){
       renderQuestions(res.questions || []);
       $('#' + testType + '-count-badge').text((res.questions || []).length);
+      // Load passing rate when on post-test
+      if (testType === 'post' && res.passing_rate !== undefined) {
+        $('#passingRateInput').val(res.passing_rate);
+      }
     }, 'json').fail(function(){ notyf.error('Failed to load questions.'); });
   }
 
@@ -226,17 +255,32 @@ $(document).ready(function () {
 
     if(!valid){ notyf.error('Please fill in all question fields and select a correct answer.'); return; }
 
+    // Include passing rate for post-test
+    var payload = { module_id: parseInt(moduleId), test_type: testType, questions: questions };
+    if (testType === 'post') {
+      var rate = parseInt($('#passingRateInput').val());
+      if (isNaN(rate) || rate < 1 || rate > 100) {
+        notyf.error('Passing rate must be between 1 and 100.');
+        return;
+      }
+      payload.passing_rate = rate;
+    }
+
     var $btn = $(this).html('<span class="spinner-border spinner-border-sm mr-1"></span>Saving...').prop('disabled', true);
     $.ajax({
       url: '<?= baseurl('/teacher/api/questions/save') ?>', type: 'POST',
       contentType: 'application/json',
-      data: JSON.stringify({ module_id: parseInt(moduleId), test_type: testType, questions: questions }),
+      data: JSON.stringify(payload),
       dataType: 'json',
       success: function(res){
         if(res.success){
           notyf.success(res.message);
           $('#' + testType + '-count-badge').text(questions.length);
           $('#' + testType + '-count-' + moduleId).html('<span class="badge ' + (questions.length > 0 ? (testType==='pre'?'badge-success':'badge-info') : 'badge-secondary') + '">' + questions.length + ' Q</span>');
+          // Update passing rate in table if post-test
+          if (testType === 'post' && payload.passing_rate !== undefined) {
+            $('#passing-rate-' + moduleId).html('<span class="badge" style="background:#d1fae5;color:#059669;font-weight:700;">' + payload.passing_rate + '%</span>');
+          }
           $('#quizModal').modal('hide');
         } else notyf.error(res.message);
       },
@@ -248,6 +292,8 @@ $(document).ready(function () {
   $('#quizModal').on('hidden.bs.modal', function(){
     $('#quizQuestionsContainer').html('');
     $('#pre-count-badge, #post-count-badge').text('0');
+    $('#passingRateWrap').hide();
+    $('#passingRateInput').val(50);
   });
 
 });

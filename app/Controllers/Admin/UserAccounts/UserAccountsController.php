@@ -42,15 +42,15 @@ class UserAccountsController extends Controller
         $name     = trim($_POST['name'] ?? '');
         $email    = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
-        $role     = $_POST['role'] ?? 'student';
+        $role     = $_POST['role'] ?? 'teacher';
 
         if (!$name || !$email || !$password) {
             json_response(['status' => 'error', 'message' => 'All fields are required.']);
             return;
         }
 
-        if (!in_array($role, ['student', 'teacher'])) {
-            json_response(['status' => 'error', 'message' => 'Invalid role.']);
+        if (!in_array($role, ['teacher'])) {
+            json_response(['status' => 'error', 'message' => 'Invalid role. Only teacher accounts can be created here.']);
             return;
         }
 
@@ -80,8 +80,8 @@ class UserAccountsController extends Controller
         $email = trim($_POST['email'] ?? '');
         $role  = $_POST['role'] ?? '';
 
-        if (!$id || !$name || !$email || !in_array($role, ['student', 'teacher'])) {
-            json_response(['status' => 'error', 'message' => 'Invalid data.']);
+        if (!$id || !$name || !$email || !in_array($role, ['teacher'])) {
+            json_response(['status' => 'error', 'message' => 'Invalid data. Only teacher role is allowed.']);
             return;
         }
 
@@ -114,5 +114,39 @@ class UserAccountsController extends Controller
     {
         $email = trim($_POST['email'] ?? '');
         json_response(['isDuplicate' => $this->model->isEmailExists($email)]);
+    }
+
+    public function updateCredentials()
+    {
+        $id       = (int)($_POST['id'] ?? 0);
+        $password = $_POST['password'] ?? '';
+        $confirm  = $_POST['confirm']  ?? '';
+
+        if (!$id) {
+            json_response(['status' => 'error', 'message' => 'Invalid user.']);
+            return;
+        }
+
+        if (strlen($password) < 8) {
+            json_response(['status' => 'error', 'message' => 'Password must be at least 8 characters.']);
+            return;
+        }
+
+        if ($password !== $confirm) {
+            json_response(['status' => 'error', 'message' => 'Passwords do not match.']);
+            return;
+        }
+
+        if (!$this->model->isTeacher($id)) {
+            json_response(['status' => 'error', 'message' => 'Password can only be changed for teacher accounts.']);
+            return;
+        }
+
+        $updated = $this->model->updatePassword($id, password_hash($password, PASSWORD_DEFAULT));
+
+        json_response($updated
+            ? ['status' => 'success', 'message' => 'Password updated successfully.']
+            : ['status' => 'error',   'message' => 'Failed to update password.']
+        );
     }
 }

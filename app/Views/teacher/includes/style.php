@@ -206,4 +206,97 @@
     #mobile-bottom-nav { display:block; }
     .topbar { top:52px; }
   }
+
+  /* ── lg < 992px ── */
+  @media (max-width:991px) {
+    .stat-number { font-size:1.7rem; }
+    .stat-card   { padding:14px 16px; }
+    .form-card   { padding:18px; }
+    .topbar      { padding:8px 18px; }
+  }
+
+  /* ── md < 768px ── */
+  @media (max-width:767px) {
+    .topbar { padding:8px 14px; padding-top:60px; }
+    .topbar-date, .topbar-divider, .topbar-user-info { display:none; }
+    .topbar-right { gap:8px; }
+    .stat-card   { padding:14px; }
+    .stat-number { font-size:1.6rem; }
+    .stat-icon   { width:38px; height:38px; font-size:1rem; }
+    .form-card   { padding:16px; border-radius:12px; }
+    .table td, .table th { font-size:0.78rem; }
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter { width:100%; text-align:left !important; }
+    .dataTables_wrapper .dataTables_filter input { width:100% !important; }
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate { text-align:center !important; float:none !important; }
+    .dataTables_wrapper .dataTables_paginate { margin-top:10px; }
+    .dataTables_wrapper .dataTables_paginate .paginate_button { padding:5px 8px !important; font-size:0.75rem !important; }
+    .modal-dialog { margin:8px; }
+    .modal-dialog.modal-lg, .modal-dialog.modal-xl { max-width:calc(100vw - 16px); }
+    .table-responsive { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .table-responsive > table { min-width:480px; }
+    .d-flex.align-items-center.justify-content-between.mb-4 { flex-wrap:wrap; gap:10px; }
+    .d-flex.align-items-center.justify-content-between.mb-4 .btn { width:100%; }
+  }
+
+  /* ── sm < 576px ── */
+  @media (max-width:575px) {
+    .container-fluid { padding-left:10px; padding-right:10px; }
+    .stat-card   { padding:12px; }
+    .stat-number { font-size:1.4rem; }
+    .stat-label  { font-size:0.65rem; }
+    .stat-icon   { width:34px; height:34px; font-size:0.9rem; }
+    .form-card   { padding:14px 12px; border-radius:10px; }
+    .table td, .table th { font-size:0.74rem; padding:6px 8px; }
+    .dataTables_wrapper .dataTables_paginate .paginate_button { padding:4px 6px !important; font-size:0.7rem !important; }
+    .modal-dialog { margin:4px; }
+    .modal-content { border-radius:12px; }
+    .modal-body { padding:14px; }
+    .modal-footer { padding:10px 14px; }
+    .modal-header { padding:12px 14px; }
+    .badge { font-size:0.68rem; }
+  }
+
+  /* ── xs < 480px ── */
+  @media (max-width:479px) {
+    .container-fluid { padding-left:8px; padding-right:8px; }
+    .stat-number { font-size:1.25rem; }
+    .stat-card   { padding:10px; }
+    .table td, .table th { font-size:0.7rem; padding:5px 6px; }
+    .table-responsive > table { min-width:360px; }
+    .dataTables_wrapper > .row > div { width:100% !important; }
+    .dataTables_wrapper .dataTables_filter input { width:100% !important; }
+    #mobile-bottom-nav .mbn-item { min-width:44px; font-size:0.55rem; padding:4px 6px; }
+    #mobile-bottom-nav .mbn-item i { font-size:1.1rem; }
+    .modal-dialog { margin:2px; }
+    .modal-body { padding:12px 10px; }
+    .modal-footer { padding:8px 10px; flex-wrap:wrap; gap:6px; }
+    .modal-footer .btn { flex:1 1 auto; }
+    .form-card { padding:12px 10px; }
+  }
+
+  /* ── xxs < 375px ── */
+  @media (max-width:374px) {
+    body { font-size:0.8rem; }
+    .container-fluid { padding-left:6px; padding-right:6px; }
+    .stat-number { font-size:1.1rem; }
+    .stat-card   { padding:8px; }
+    .form-card   { padding:10px 8px; }
+    .table td, .table th { font-size:0.65rem; padding:4px 5px; }
+    .topbar { padding:6px 10px; padding-top:58px; }
+    .modal-body { padding:10px 8px; }
+    .modal-footer .btn { font-size:0.78rem; padding:6px 10px; }
+    #mobile-bottom-nav .mbn-item { min-width:38px; padding:3px 4px; }
+  }
+
+  /* ── Print ── */
+  @media print {
+    #sidebar, #mobile-header, #mobile-bottom-nav,
+    .topbar, .admin-footer, .btn,
+    .dataTables_wrapper .dataTables_paginate { display:none !important; }
+    #content-wrapper { margin-left:0 !important; }
+    .form-card, .stat-card, .dashboard-card { box-shadow:none !important; border:1px solid #ddd !important; }
+    body { font-size:11pt; background:#fff; }
+  }
 </style>
