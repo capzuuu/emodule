@@ -49,4 +49,20 @@ class UserAccounts extends Model
         if ($excludeId) { $sql .= " AND id != :id"; $params['id'] = $excludeId; }
         return $this->query($sql, $params)->fetchColumn() > 0;
     }
+
+    public function isTeacher(int $id): bool
+    {
+        return $this->query(
+            "SELECT COUNT(*) FROM {$this->table} WHERE id = ? AND role = 'teacher'",
+            [$id]
+        )->fetchColumn() > 0;
+    }
+
+    public function updatePassword(int $id, string $hashedPassword): bool
+    {
+        return $this->query(
+            "UPDATE {$this->table} SET password = ?, updated_at = NOW() WHERE id = ? AND role = 'teacher'",
+            [$hashedPassword, $id]
+        )->rowCount() > 0;
+    }
 }

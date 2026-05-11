@@ -69,6 +69,13 @@ class StudentController extends Controller
         $preQuestions  = $this->model->getQuestions($moduleId, 'pre');
         $postQuestions = $this->model->getQuestions($moduleId, 'post');
 
+        // Always check if pre-test was submitted (needed for unlock logic)
+        $preDoneMap = $this->model->getPreTestDoneMap($this->userId, [$moduleId]);
+        $preDone    = $preDoneMap[$moduleId] ?? false;
+
+        // Check if lesson was marked done (stored in session or a separate flag)
+        $lessonDone = $this->model->isLessonDone($this->userId, $moduleId);
+
         // Load saved answers for completed modules
         $preAnswers  = $status === 'completed' ? $this->model->getAnswers($this->userId, $moduleId, 'pre')  : [];
         $postAnswers = $status === 'completed' ? $this->model->getAnswers($this->userId, $moduleId, 'post') : [];
@@ -78,12 +85,29 @@ class StudentController extends Controller
             'userName'      => $this->userName,
             'module'        => $module,
             'status'        => $status,
+            'preDone'       => $preDone,
+            'lessonDone'    => $lessonDone,
             'preQuestions'  => $preQuestions,
             'postQuestions' => $postQuestions,
             'preAnswers'    => $preAnswers,
             'postAnswers'   => $postAnswers,
             'progress'      => $progress,
         ]);
+    }
+
+    // ── Mark lesson as done (AJAX) ──
+    public function markLessonDone()
+    {
+        $input    = json_decode(file_get_contents('php://input'), true);
+        $moduleId = (int)($input['module_id'] ?? 0);
+
+        if (!$moduleId) {
+            json_response(['success' => false, 'message' => 'Invalid module.']);
+            return;
+        }
+
+        $this->model->setLessonDone($this->userId, $moduleId);
+        json_response(['success' => true]);
     }
 
     // ── Submit test (AJAX) ──
@@ -114,20 +138,31 @@ class StudentController extends Controller
         $total = count($questions);
         $score = (int)round($correct / $total * 100);
 
+        // Get the module's passing rate (default 50 if not set)
+        $module      = $this->model->getModule($moduleId);
+        $passingRate = (int)($module['passing_rate'] ?? 50);
+
         // Save student answers
         $this->model->saveAnswers($this->userId, $moduleId, $testType, $answers);
 
-        // On post-test: save completion
+        // On post-test: track attempt, complete if passed, otherwise clear answers for retry
         if ($testType === 'post') {
-            $this->model->completeModule($this->userId, $moduleId, $score);
+            $this->model->incrementPostAttempt($this->userId, $moduleId);
+            if ($score >= $passingRate) {
+                $this->model->completeModule($this->userId, $moduleId, $score);
+            } else {
+                $this->model->clearAnswers($this->userId, $moduleId, 'post');
+            }
         }
 
         json_response([
-            'success'   => true,
-            'score'     => $score,
-            'correct'   => $correct,
-            'total'     => $total,
-            'test_type' => $testType,
+            'success'      => true,
+            'score'        => $score,
+            'correct'      => $correct,
+            'total'        => $total,
+            'test_type'    => $testType,
+            'passing_rate' => $passingRate,
+            'passed'       => $score >= $passingRate,
         ]);
     }
 

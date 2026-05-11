@@ -72,6 +72,15 @@ $router->post('/admin/userAccounts/create', 'Admin\UserAccounts\UserAccountsCont
 $router->post('/admin/userAccounts/edit', 'Admin\UserAccounts\UserAccountsController@edit');
 $router->post('/admin/userAccounts/delete', 'Admin\UserAccounts\UserAccountsController@delete');
 $router->post('/admin/userAccounts/checkEmailDuplicate', 'Admin\UserAccounts\UserAccountsController@checkEmailDuplicate');
+$router->post('/admin/userAccounts/updateCredentials',  'Admin\UserAccounts\UserAccountsController@updateCredentials');
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN – PROGRESS
+|--------------------------------------------------------------------------
+*/
+$router->get('/admin/progress',      'Admin\Progress\ProgressController@index');
+$router->get('/admin/progress/json', 'Admin\Progress\ProgressController@json');
 /*
 |--------------------------------------------------------------------------
 | ADMIN – MODULES
@@ -96,6 +105,7 @@ $router->get('/student/modules/(:num)',         'Student\StudentController@modul
 $router->get('/student/modules/(:num)/pdf',     'Student\StudentController@servePdf');
 $router->get('/student/progress',               'Student\StudentController@progress');
 $router->post('/student/api/test/submit',       'Student\StudentController@submitTest');
+$router->post('/student/api/lesson/done',       'Student\StudentController@markLessonDone');
 
 /*
 |--------------------------------------------------------------------------
@@ -132,6 +142,7 @@ $router->post('/teacher/api/questions/save', 'Teacher\Dashboard\TeacherControlle
 $router->get('/teacher/api/students', 'Teacher\Dashboard\TeacherController@studentsJson');
 $router->get('/teacher/api/students/unassigned', 'Teacher\Dashboard\TeacherController@unassignedStudentsJson');
 $router->post('/teacher/api/students/create', 'Teacher\Dashboard\TeacherController@studentCreate');
+$router->post('/teacher/api/students/create-new', 'Teacher\Dashboard\TeacherController@studentCreateNew');
 $router->post('/teacher/api/students/edit', 'Teacher\Dashboard\TeacherController@studentEdit');
 $router->post('/teacher/api/students/delete', 'Teacher\Dashboard\TeacherController@studentDelete');
 $router->get('/teacher/api/grades', 'Teacher\Dashboard\TeacherController@gradesJson');

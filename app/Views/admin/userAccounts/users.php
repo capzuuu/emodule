@@ -36,7 +36,7 @@
                       <th>Email</th>
                       <th>Role</th>
                       <th>Joined</th>
-                      <th style="width:100px;">Actions</th>
+                      <th style="width:130px;">Actions</th>
                     </tr>
                   </thead>
                   <tbody></tbody>
@@ -65,6 +65,7 @@ var notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'bottom' } })
 <?php include __DIR__ . '/addUser_modal.php'; ?>
 <?php include __DIR__ . '/editUser_modal.php'; ?>
 <?php include __DIR__ . '/deleteUser_modal.php'; ?>
+<?php include __DIR__ . '/changeCredentials_modal.php'; ?>
 
 <?php /* 4. DataTable init */ ?>
 <script nonce="<?= csp_nonce() ?>">
@@ -128,18 +129,32 @@ $(document).ready(function () {
         render: function (data) {
           var name  = $('<div>').text(data.name).html();
           var email = $('<div>').text(data.email || '').html();
-          return '<button class="btn btn-sm btn-light mr-1"' +
+          var btns  =
+            '<button class="btn btn-sm btn-light mr-1"' +
             ' data-toggle="modal" data-target="#editUserModal"' +
             ' data-id="'    + data.id   + '"' +
             ' data-name="'  + name      + '"' +
             ' data-email="' + email     + '"' +
             ' data-role="'  + data.role + '"' +
-            ' title="Edit"><i class="bi bi-pencil-fill text-secondary"></i></button>' +
+            ' title="Edit"><i class="bi bi-pencil-fill text-secondary"></i></button>';
+
+          if (data.role === 'teacher') {
+            btns +=
+              '<button class="btn btn-sm btn-light mr-1"' +
+              ' data-toggle="modal" data-target="#changeCredentialsModal"' +
+              ' data-id="'   + data.id + '"' +
+              ' data-name="' + name    + '"' +
+              ' title="Change Password"><i class="bi bi-key-fill" style="color:#e65100;"></i></button>';
+          }
+
+          btns +=
             '<button class="btn btn-sm btn-light"' +
             ' data-toggle="modal" data-target="#deleteUserModal"' +
             ' data-id="'   + data.id + '"' +
             ' data-name="' + name    + '"' +
             ' title="Delete"><i class="bi bi-trash3-fill text-danger"></i></button>';
+
+          return btns;
         }
       }
     ],

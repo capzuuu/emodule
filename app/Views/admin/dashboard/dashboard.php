@@ -210,8 +210,8 @@
                   </div>
                   <div class="col-6">
                     <a href="<?= baseurl('/admin/modules') ?>" class="quick-action-btn flex-column text-center" style="gap:8px;padding:14px 8px;">
-                      <div class="quick-action-icon mx-auto" style="background:#eef2ff;color:#4e73df;"><i class="bi bi-journal-plus"></i></div>
-                      <span style="font-size:11.5px;">Add Module</span>
+                      <div class="quick-action-icon mx-auto" style="background:#eef2ff;color:#4e73df;"><i class="bi bi-journal-bookmark-fill"></i></div>
+                      <span style="font-size:11.5px;">View Modules</span>
                     </a>
                   </div>
                   <div class="col-6">

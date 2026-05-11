@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <?php teacher_view_layout(['header', 'style']); ?>
-<link href="<?= asset('dist/assets/css/select2.min.css') ?>" rel="stylesheet">
-<link href="<?= asset('dist/assets/css/select2-bootstrap4.min.css') ?>" rel="stylesheet">
 
 <body>
 <div id="wrapper">
@@ -15,7 +13,7 @@
         <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap">
           <div>
             <h5 class="m-0 mb-1 font-weight-bold"><?= htmlspecialchars($pageTitle) ?></h5>
-            <div class="text-muted" style="font-size:13px;">Assign admin-created students to your class.</div>
+            <div class="text-muted" style="font-size:13px;">Create and manage student accounts for your class.</div>
           </div>
           <button class="btn btn-success shadow-sm" data-toggle="modal" data-target="#addStudentModal">
             <i class="bi bi-plus mr-1"></i> Add Student
@@ -55,18 +53,38 @@
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content border-0 shadow" style="border-radius:16px;">
       <div class="modal-header border-0" style="background:linear-gradient(135deg,#258517,#396619);color:#fff;border-radius:16px 16px 0 0;">
-        <h5 class="modal-title"><i class="bi bi-person-plus mr-2"></i>Add Student</h5>
+        <h5 class="modal-title"><i class="bi bi-person-plus mr-2"></i>Create Student Account</h5>
         <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:1;font-size:1.4rem;"><span>&times;</span></button>
       </div>
       <form id="addStudentForm">
         <div class="modal-body px-4 py-3">
-          <div class="form-group">
-            <label class="font-weight-bold" style="font-size:.82rem;">Select Student <span class="text-danger">*</span></label>
-            <select id="studentSelect" name="student_user_id" class="form-control" style="width:100%;">
-              <option value=""></option>
-            </select>
-            <small class="text-muted">Only students not yet assigned to you are shown.</small>
+
+          <div class="form-group mb-3">
+            <label class="font-weight-bold" style="font-size:.82rem;">Full Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="addStudentName" placeholder="Juan Dela Cruz" required>
           </div>
+
+          <div class="form-group mb-3">
+            <label class="font-weight-bold" style="font-size:.82rem;">Email Address <span class="text-danger">*</span></label>
+            <input type="email" class="form-control" id="addStudentEmail" placeholder="juan@school.edu.ph" required>
+            <small id="addStudentEmailFeedback" class="text-danger d-none"></small>
+          </div>
+
+          <div class="form-group mb-3">
+            <label class="font-weight-bold" style="font-size:.82rem;">Password <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="password" class="form-control" id="addStudentPassword" placeholder="Min. 6 characters" required>
+              <div class="input-group-append">
+                <button type="button" class="btn btn-outline-secondary" id="toggleStudentPwd">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+            </div>
+            <div class="text-right mt-1">
+              <button type="button" class="btn btn-sm btn-outline-success" id="generateStudentPwdBtn">Generate</button>
+            </div>
+          </div>
+
           <div class="row">
             <div class="col-6">
               <div class="form-group mb-0">
@@ -91,11 +109,12 @@
               </div>
             </div>
           </div>
+
         </div>
         <div class="modal-footer px-4">
           <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
-          <button type="submit" id="addStudentBtn" class="btn btn-success font-weight-bold">
-            <i class="bi bi-check-circle mr-1"></i>Assign Student
+          <button type="submit" id="addStudentBtn" class="btn btn-success font-weight-bold" disabled>
+            <i class="bi bi-check-circle mr-1"></i>Create Student
           </button>
         </div>
       </form>
@@ -183,7 +202,6 @@
 </div>
 
 <?php teacher_view_layout(['script']); ?>
-<script src="<?= asset('dist/assets/js/select2.min.js') ?>" nonce="<?= csp_nonce() ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
 var notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'bottom' } });
 
@@ -218,61 +236,77 @@ $(document).ready(function () {
     }
   });
 
-  // ── Select2 ──
-  $('#studentSelect').select2({
-    theme: 'bootstrap4',
-    dropdownParent: $('#addStudentModal'),
-    placeholder: '— Search student name or email —',
-    allowClear: true
-  });
+  // ── Add Student: email duplicate check ──
+  var emailDup = false;
 
-  // Load unassigned students when modal opens
-  $('#addStudentModal').on('show.bs.modal', function () {
-    $('#studentSelect').empty().append('<option value=""></option>').trigger('change');
+  function checkAddForm() {
+    var ok = $.trim($('#addStudentName').val()) !== '' &&
+             $.trim($('#addStudentEmail').val()) !== '' &&
+             $.trim($('#addStudentPassword').val()) !== '';
+    $('#addStudentBtn').prop('disabled', !ok || emailDup);
+  }
 
-    $.getJSON('<?= baseurl('/teacher/api/students/unassigned') ?>', function (res) {
-      if (!res.success) { notyf.error('Failed to load students.'); return; }
+  $('#addStudentForm').on('input change', 'input, select', checkAddForm);
 
-      var data = res.data || [];
-      if (data.length === 0) {
-        notyf.error('No available students to assign.');
-        return;
+  $('#addStudentEmail').on('input', function () {
+    var val = $.trim($(this).val());
+    emailDup = false;
+    $('#addStudentEmailFeedback').addClass('d-none').text('');
+    if (!val) { checkAddForm(); return; }
+    $.post('<?= baseurl("/admin/userAccounts/checkEmailDuplicate") ?>', { email: val }, function (res) {
+      if (res.isDuplicate) {
+        emailDup = true;
+        $('#addStudentEmailFeedback').removeClass('d-none').text('Email already exists.');
       }
-
-      $.each(data, function (i, s) {
-        var option = new Option(s.name + ' — ' + s.email, s.id, false, false);
-        $('#studentSelect').append(option);
-      });
-
-      $('#studentSelect').trigger('change');
-    }).fail(function (xhr) {
-      notyf.error('Failed to load students. Status: ' + xhr.status);
-    });
+      checkAddForm();
+    }, 'json');
   });
 
-  $('#addStudentModal').on('hidden.bs.modal', function () {
-    $('#studentSelect').empty().append('<option value=""></option>').trigger('change');
-    $('#addGradeId, #addSectionId').val('');
+  $('#toggleStudentPwd').on('click', function () {
+    var $pwd = $('#addStudentPassword');
+    var show = $pwd.attr('type') === 'password';
+    $pwd.attr('type', show ? 'text' : 'password');
+    $(this).find('i').toggleClass('bi-eye bi-eye-slash');
   });
 
-  // ── Assign ──
+  $('#generateStudentPwdBtn').on('click', function () {
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#';
+    var p = '';
+    for (var i = 0; i < 8; i++) p += chars.charAt(Math.floor(Math.random() * chars.length));
+    $('#addStudentPassword').val(p).attr('type', 'text').trigger('input');
+  });
+
+  // ── Create new student ──
   $('#addStudentForm').on('submit', function (e) {
     e.preventDefault();
-    var studentUserId = $('#studentSelect').val();
-    if (!studentUserId) { notyf.error('Please select a student.'); return; }
-    var $btn = $('#addStudentBtn').html('<span class="spinner-border spinner-border-sm mr-1"></span>Assigning...').prop('disabled', true);
+    var $btn = $('#addStudentBtn').html('<span class="spinner-border spinner-border-sm mr-1"></span>Creating...').prop('disabled', true);
     $.ajax({
-      url: '<?= baseurl('/teacher/api/students/create') ?>', type: 'POST',
+      url: '<?= baseurl('/teacher/api/students/create-new') ?>', type: 'POST',
       contentType: 'application/json',
-      data: JSON.stringify({ student_user_id: parseInt(studentUserId), grade_id: $('#addGradeId').val(), section_id: $('#addSectionId').val() }),
+      data: JSON.stringify({
+        name:       $.trim($('#addStudentName').val()),
+        email:      $.trim($('#addStudentEmail').val()),
+        password:   $('#addStudentPassword').val(),
+        grade_id:   $('#addGradeId').val(),
+        section_id: $('#addSectionId').val()
+      }),
       dataType: 'json',
       success: function (res) {
         if (res.success) { notyf.success(res.message); table.ajax.reload(null, false); $('#addStudentModal').modal('hide'); }
         else notyf.error(res.message);
       },
       error: function () { notyf.error('Server error.'); },
-      complete: function () { $btn.html('<i class="bi bi-check-circle mr-1"></i>Assign Student').prop('disabled', false); }
+      complete: function () { $btn.html('<i class="bi bi-check-circle mr-1"></i>Create Student').prop('disabled', false); }
     });
+  });
+
+  $('#addStudentModal').on('hidden.bs.modal', function () {
+    $('#addStudentForm')[0].reset();
+    emailDup = false;
+    $('#addStudentEmailFeedback').addClass('d-none').text('');
+    $('#addStudentBtn').prop('disabled', true);
+    $('#addStudentPassword').attr('type', 'password');
+    $('#toggleStudentPwd i').removeClass('bi-eye-slash').addClass('bi-eye');
   });
 
   // ── Edit ──

@@ -24,14 +24,7 @@
             <small id="addEmailFeedback" class="text-danger d-none"></small>
           </div>
 
-          <div class="form-group mb-3">
-            <label class="font-weight-bold" style="font-size:.82rem;">Role <span class="text-danger">*</span></label>
-            <select class="form-control" name="role" id="addRole" required>
-              <option value="">Select Role</option>
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
-            </select>
-          </div>
+          <input type="hidden" name="role" value="teacher">
 
           <div class="form-group mb-0">
             <label class="font-weight-bold" style="font-size:.82rem;">Password <span class="text-danger">*</span></label>
@@ -73,7 +66,6 @@ $(function () {
   function checkForm() {
     var ok = $.trim($('#addName').val()) !== '' &&
              $.trim($email.val()) !== '' &&
-             $.trim($('#addRole').val()) !== '' &&
              $.trim($pwd.val()) !== '';
     $btn.prop('disabled', !ok || emailDup);
   }

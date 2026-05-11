@@ -45,15 +45,15 @@ $initials = strtoupper(implode('', array_map(fn($w) => $w[0], array_slice(explod
       <i class="bi bi-people-fill"></i> User Management
     </a>
 
-    <!-- <span class="nav-label">Content</span>
+    <span class="nav-label">Content</span>
     <a href="<?= baseurl('/admin/modules') ?>" class="<?= isActive('/admin/modules') ?>">
       <i class="bi bi-journal-bookmark-fill"></i> Modules
-    </a> -->
+    </a>
 
-    <!-- <span class="nav-label">Reports</span>
+    <span class="nav-label">Reports</span>
     <a href="<?= baseurl('/admin/progress') ?>" class="<?= isActive('/admin/progress') ?>">
       <i class="bi bi-graph-up"></i> Student Progress
-    </a> -->
+    </a>
 
     <span class="nav-label">Account</span>
     <a href="<?= baseurl('/admin/profile') ?>" class="<?= isActive('/admin/profile') ?>">
