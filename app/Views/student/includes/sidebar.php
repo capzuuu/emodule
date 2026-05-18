@@ -56,7 +56,7 @@ function studentIsActive(string $path): string {
   </div>
 
   <div class="sidebar-logout">
-    <a href="<?= baseurl('/auth/logout') ?>">
+    <a href="<?= baseurl('/auth/logout') ?>" data-logout>
       <i class="bi bi-box-arrow-left"></i> Logout
     </a>
   </div>
@@ -77,9 +77,47 @@ function studentIsActive(string $path): string {
       <i class="bi bi-graph-up"></i>
       <span>Progress</span>
     </a>
-    <a href="<?= baseurl('/student/profile') ?>" class="mbn-item <?= studentIsActive('/student/profile') ?>">
-      <i class="bi bi-person-circle"></i>
-      <span>Profile</span>
-    </a>
+    <button class="mbn-item" id="mbn-more-btn"
+            aria-expanded="false" aria-controls="mbn-drawer">
+      <i class="bi bi-grid-3x3-gap-fill"></i>
+      <span>More</span>
+    </button>
   </div>
 </nav>
+
+<!-- ── MOBILE MORE DRAWER ── -->
+<div id="mbn-drawer" aria-hidden="true">
+  <div id="mbn-drawer-inner">
+    <div class="mbn-drawer-header">
+      <span>Menu</span>
+      <button id="mbn-drawer-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="mbn-drawer-items">
+      <a href="<?= baseurl('/student/profile') ?>" class="mbn-drawer-item <?= studentIsActive('/student/profile') ?>">
+        <i class="bi bi-person-circle"></i><span>My Profile</span>
+      </a>
+      <a href="<?= baseurl('/auth/logout') ?>" class="mbn-drawer-item mbn-drawer-logout" data-logout>
+        <i class="bi bi-box-arrow-left"></i><span>Logout</span>
+      </a>
+    </div>
+  </div>
+</div>
+<div id="mbn-overlay"></div>
+
+<script nonce="<?= csp_nonce() ?>">
+(function () {
+  var btn     = document.getElementById('mbn-more-btn');
+  var drawer  = document.getElementById('mbn-drawer');
+  var overlay = document.getElementById('mbn-overlay');
+  var close   = document.getElementById('mbn-drawer-close');
+
+  function openDrawer()  { drawer.classList.add('open');  overlay.classList.add('open');  btn.setAttribute('aria-expanded','true');  }
+  function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+
+  btn.addEventListener('click', function () {
+    drawer.classList.contains('open') ? closeDrawer() : openDrawer();
+  });
+  close.addEventListener('click', closeDrawer);
+  overlay.addEventListener('click', closeDrawer);
+})();
+</script>

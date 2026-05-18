@@ -15,4 +15,11 @@
   <link href="<?= asset('dist/assets/icons/bootstrap-icons.css') ?>" rel="stylesheet">
   <link href="<?= asset('dist/assets/css/notyf.min.css') ?>" rel="stylesheet">
   <link rel="icon" type="image/png" href="<?= asset('dist/assets/img/Rizal_logo.png') ?>">
+  <script>
+    (function () {
+      var map = { 25: 12, 50: 14, 85: 16, 100: 18 };
+      var pct = parseInt(localStorage.getItem('studentFontSize'));
+      if (map[pct]) document.documentElement.style.fontSize = map[pct] + 'px';
+    })();
+  </script>
 </head>

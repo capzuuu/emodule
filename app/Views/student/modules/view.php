@@ -285,17 +285,23 @@
             <div class="quiz-header">
               <div>
                 <div class="quiz-header-title"><i class="bi bi-clipboard-check mr-2" style="color:#258517;"></i>Pre-Test</div>
-                <div class="quiz-counter"><?= count($preQuestions) ?> questions</div>
+                <div class="quiz-counter"><span id="pre-q-current">1</span> of <?= count($preQuestions) ?> questions</div>
               </div>
+
             </div>
-            <div class="quiz-progress-dots" id="pre-dots">
-              <?php foreach ($preQuestions as $q): ?>
-                <div class="quiz-dot" data-qid="<?= $q['id'] ?>"></div>
-              <?php endforeach; ?>
+
+            <!-- Progress bar -->
+            <div style="height:4px;background:#e8f0e9;border-radius:4px;margin-bottom:24px;">
+              <div id="pre-progress-bar" style="height:100%;background:linear-gradient(90deg,#258517,#4F9516);border-radius:4px;transition:.3s;width:0%;"></div>
             </div>
+
             <div id="pretest-questions">
-              <?php foreach ($preQuestions as $i => $q): ?>
-                <div class="question-card" data-qid="<?= $q['id'] ?>">
+              <?php
+                $shuffled = $preQuestions;
+                shuffle($shuffled);
+              ?>
+              <?php foreach ($shuffled as $i => $q): ?>
+                <div class="question-card" data-qid="<?= $q['id'] ?>" data-index="<?= $i ?>" style="<?= $i > 0 ? 'display:none;' : '' ?>">
                   <div class="d-flex align-items-start mb-3">
                     <span class="question-num"><?= $i + 1 ?></span>
                     <span class="question-text"><?= htmlspecialchars($q['question_text']) ?></span>
@@ -309,7 +315,17 @@
                 </div>
               <?php endforeach; ?>
             </div>
-            <button class="quiz-submit-btn" id="submitPreBtn"><i class="bi bi-send"></i> Submit Pre-Test</button>
+
+            <!-- Navigation -->
+            <div class="d-flex align-items-center justify-content-between mt-3" style="gap:10px;">
+              <button class="btn btn-outline-secondary" id="preNavPrev" style="border-radius:10px;min-width:90px;" disabled>
+                <i class="bi bi-chevron-left mr-1"></i> Prev
+              </button>
+              <button class="btn btn-outline-success font-weight-bold" id="preNavNext" style="border-radius:10px;min-width:90px;">
+                Next <i class="bi bi-chevron-right ml-1"></i>
+              </button>
+              <button class="quiz-submit-btn" id="submitPreBtn" style="display:none;max-width:200px;"><i class="bi bi-send mr-1"></i> Submit</button>
+            </div>
           </div>
           <div id="pre-result"></div>
           <?php endif; ?>
@@ -366,22 +382,27 @@
                 </div>
               <?php endforeach; ?>
             </div>
-          <?php else: ?>
+          <?php else:
+            $shuffledPost = $postQuestions;
+            shuffle($shuffledPost);
+          ?>
           <div class="quiz-card">
             <div class="quiz-header">
               <div>
-                <div class="quiz-header-title"><i class="bi bi-clipboard-data mr-2" style="color:#4e73df;"></i>Post-Test</div>
-                <div class="quiz-counter"><?= count($postQuestions) ?> questions</div>
+                <div class="quiz-header-title"><i class="bi bi-clipboard-data mr-2" style="color:#258517;"></i>Post-Test</div>
+                <div class="quiz-counter"><span id="post-q-current">1</span> of <?= count($shuffledPost) ?> questions</div>
               </div>
+
             </div>
-            <div class="quiz-progress-dots" id="post-dots">
-              <?php foreach ($postQuestions as $q): ?>
-                <div class="quiz-dot" data-qid="<?= $q['id'] ?>"></div>
-              <?php endforeach; ?>
+
+            <!-- Progress bar -->
+            <div style="height:4px;background:#e8f0e9;border-radius:4px;margin-bottom:24px;">
+              <div id="post-progress-bar" style="height:100%;background:linear-gradient(90deg,#258517,#4F9516);border-radius:4px;transition:.3s;width:0%;"></div>
             </div>
+
             <div id="posttest-questions">
-              <?php foreach ($postQuestions as $i => $q): ?>
-                <div class="question-card" data-qid="<?= $q['id'] ?>">
+              <?php foreach ($shuffledPost as $i => $q): ?>
+                <div class="question-card" data-qid="<?= $q['id'] ?>" data-index="<?= $i ?>" style="<?= $i > 0 ? 'display:none;' : '' ?>">
                   <div class="d-flex align-items-start mb-3">
                     <span class="question-num"><?= $i + 1 ?></span>
                     <span class="question-text"><?= htmlspecialchars($q['question_text']) ?></span>
@@ -395,7 +416,17 @@
                 </div>
               <?php endforeach; ?>
             </div>
-            <button class="quiz-submit-btn" id="submitPostBtn"><i class="bi bi-send"></i> Submit Post-Test</button>
+
+            <!-- Navigation -->
+            <div class="d-flex align-items-center justify-content-between mt-3" style="gap:10px;">
+              <button class="btn btn-outline-secondary" id="postNavPrev" style="border-radius:10px;min-width:90px;" disabled>
+                <i class="bi bi-chevron-left mr-1"></i> Prev
+              </button>
+              <button class="btn btn-outline-success font-weight-bold" id="postNavNext" style="border-radius:10px;min-width:90px;">
+                Next <i class="bi bi-chevron-right ml-1"></i>
+              </button>
+              <button class="quiz-submit-btn" id="submitPostBtn" style="display:none;max-width:200px;"><i class="bi bi-send mr-1"></i> Submit</button>
+            </div>
           </div>
           <div id="post-result"></div>
           <?php endif; ?>
@@ -481,18 +512,19 @@ $(document).ready(function () {
     $card.find('.option-row').removeClass('selected');
     $(this).addClass('selected');
     $card.addClass('answered');
-    $('[data-qid="' + qid + '"].quiz-dot').addClass('answered');
   });
 
   function submitTest(testType, btnId, containerId, resultId) {
-    var answers = {}, allAnswered = true;
+    var answers = {};
     $('#' + containerId + ' .question-card').each(function () {
-      var qid = $(this).data('qid');
       var sel = $(this).find('.option-row.selected').data('value');
-      if (!sel) { allAnswered = false; return false; }
-      answers[qid] = sel;
+      if (sel) answers[$(this).data('qid')] = sel;
     });
-    if (!allAnswered) { notyf.error('Please answer all questions before submitting.'); return; }
+    var total = $('#' + containerId + ' .question-card').length;
+    if (Object.keys(answers).length < total) {
+      notyf.error('Please answer all questions before submitting.');
+      return;
+    }
 
     var $btn = $('#' + btnId).html('<span class="spinner-border spinner-border-sm mr-1"></span> Submitting...').prop('disabled', true);
     $.ajax({
@@ -513,7 +545,7 @@ $(document).ready(function () {
           $('#tab-btn-content').removeAttr('data-locked').find('span:last-child').remove();
         }
 
-        var passingInfo = res.passing_rate ? ' · Passing: ' + res.passing_rate + '%' : '';
+        var passingInfo = '';
         var retryBtn = '<button class="quiz-submit-btn" style="max-width:200px;margin:0 auto;" id="retryPostBtn"><i class="bi bi-arrow-clockwise"></i> Try Again</button>';
 
         $('#' + resultId).html(
@@ -531,14 +563,7 @@ $(document).ready(function () {
           '</div>'
         );
 
-        // Retry post-test: reset all options and re-enable
-        $(document).off('click', '#retryPostBtn').on('click', '#retryPostBtn', function () {
-          $('#' + resultId).hide();
-          $('#' + containerId + ' .question-card').removeClass('answered');
-          $('#' + containerId + ' .option-row').removeClass('selected correct wrong').css('pointer-events', '');
-          $('#' + containerId + ' .quiz-dot').removeClass('answered');
-          $('#' + btnId).show().prop('disabled', false).html('<i class="bi bi-send"></i> Submit Post-Test');
-        });
+
         notyf.success(res.score + '% — ' + (passed ? 'Passed!' : 'Keep going!'));
       },
       error: function () { notyf.error('Server error.'); },
@@ -553,8 +578,91 @@ $(document).ready(function () {
     switchTab('content');
   });
 
-  $('#submitPreBtn').on('click',  function () { submitTest('pre',  'submitPreBtn',  'pretest-questions',  'pre-result'); });
+  // ── Pre-Test one-by-one navigation ──
+  var preTotal   = $('#pretest-questions .question-card').length;
+  var preCurrent = 0;
+
+  function preGoTo(index) {
+    $('#pretest-questions .question-card').hide();
+    var $card = $('#pretest-questions .question-card[data-index="' + index + '"]');
+    $card.show();
+    preCurrent = index;
+    $('#pre-q-current').text(index + 1);
+    $('#pre-progress-bar').css('width', (((index + 1) / preTotal) * 100) + '%');
+    $('#preNavPrev').prop('disabled', index === 0);
+    if (index === preTotal - 1) {
+      $('#preNavNext').hide();
+      $('#submitPreBtn').show();
+    } else {
+      $('#preNavNext').show();
+      $('#submitPreBtn').hide();
+    }
+  }
+
+  $('#preNavNext').on('click', function () {
+    if (preCurrent < preTotal - 1) preGoTo(preCurrent + 1);
+  });
+
+  $('#preNavPrev').on('click', function () {
+    if (preCurrent > 0) preGoTo(preCurrent - 1);
+  });
+
+  // init
+  if (preTotal > 0) preGoTo(0);
+
+  $('#submitPreBtn').on('click', function () { submitTest('pre', 'submitPreBtn', 'pretest-questions', 'pre-result'); });
   $('#submitPostBtn').on('click', function () { submitTest('post', 'submitPostBtn', 'posttest-questions', 'post-result'); });
+
+  // ── Post-Test one-by-one navigation ──
+  var postTotal   = $('#posttest-questions .question-card').length;
+  var postCurrent = 0;
+
+  function postGoTo(index) {
+    $('#posttest-questions .question-card').hide();
+    $('#posttest-questions .question-card[data-index="' + index + '"]').show();
+    postCurrent = index;
+    $('#post-q-current').text(index + 1);
+    $('#post-progress-bar').css('width', (((index + 1) / postTotal) * 100) + '%');
+    $('#postNavPrev').prop('disabled', index === 0);
+    if (index === postTotal - 1) {
+      $('#postNavNext').hide();
+      $('#submitPostBtn').show();
+    } else {
+      $('#postNavNext').show();
+      $('#submitPostBtn').hide();
+    }
+  }
+
+  $('#postNavNext').on('click', function () {
+    if (postCurrent < postTotal - 1) postGoTo(postCurrent + 1);
+  });
+
+  $('#postNavPrev').on('click', function () {
+    if (postCurrent > 0) postGoTo(postCurrent - 1);
+  });
+
+  if (postTotal > 0) postGoTo(0);
+
+  // Reset post-test navigation on retry with re-shuffle
+  $(document).on('click', '#retryPostBtn', function () {
+    $('#post-result').hide();
+    var $container = $('#posttest-questions');
+    var cards = $container.find('.question-card').toArray();
+    for (var i = cards.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = cards[i]; cards[i] = cards[j]; cards[j] = t;
+    }
+    $.each(cards, function (i, card) {
+      $(card).attr('data-index', i).removeClass('answered')
+             .find('.option-row').removeClass('selected correct wrong').css('pointer-events', '');
+      $container.append(card);
+    });
+    $.each(cards, function (i, card) {
+      $container.append(card);
+    });
+    postTotal = cards.length;
+    postGoTo(0);
+  });
 });
 </script>
 

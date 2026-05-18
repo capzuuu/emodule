@@ -99,4 +99,84 @@ class ProfileController extends Controller
 
         json_response(['status' => 'success', 'message' => 'Password changed successfully.']);
     }
+
+    // ── Upload profile picture ──
+    public function uploadPicture()
+    {
+        $id = (int) $_SESSION['user']['id'];
+
+        if (empty($_FILES['profile_picture']) || $_FILES['profile_picture']['error'] !== UPLOAD_ERR_OK) {
+            json_response(['status' => 'error', 'message' => 'No file uploaded or upload error.']);
+            return;
+        }
+
+        $file     = $_FILES['profile_picture'];
+        $maxSize  = 2 * 1024 * 1024; // 2 MB
+        $allowed  = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $mimeType = mime_content_type($file['tmp_name']);
+
+        if ($file['size'] > $maxSize) {
+            json_response(['status' => 'error', 'message' => 'File must be under 2MB.']);
+            return;
+        }
+
+        if (!in_array($mimeType, $allowed, true)) {
+            json_response(['status' => 'error', 'message' => 'Only JPEG, PNG, GIF, and WEBP images are allowed.']);
+            return;
+        }
+
+        $storageDir = BASE_PATH . '/storage/images';
+        if (!is_dir($storageDir)) {
+            mkdir($storageDir, 0755, true);
+        }
+
+        // Remove old picture file if it exists
+        $existing = $this->model->getProfilePicturePath($id);
+        if ($existing) {
+            $oldFile = BASE_PATH . '/' . ltrim($existing, '/');
+            if (file_exists($oldFile)) {
+                unlink($oldFile);
+            }
+        }
+
+        $ext      = pathinfo($file['name'], PATHINFO_EXTENSION) ?: 'jpg';
+        $filename = 'student_' . $id . '_' . time() . '.' . $ext;
+        $dest     = $storageDir . '/' . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+            json_response(['status' => 'error', 'message' => 'Failed to save image. Please try again.']);
+            return;
+        }
+
+        $relativePath = 'storage/images/' . $filename;
+        $this->model->updateProfilePicture($id, $relativePath);
+
+        json_response(['status' => 'success', 'message' => 'Profile picture updated successfully.']);
+    }
+
+    // ── Serve profile picture ──
+    public function serveProfilePicture()
+    {
+        $id   = (int) $_SESSION['user']['id'];
+        $path = $this->model->getProfilePicturePath($id);
+
+        if (!$path) {
+            http_response_code(404);
+            exit;
+        }
+
+        $filePath = BASE_PATH . '/' . ltrim($path, '/');
+
+        if (!file_exists($filePath)) {
+            http_response_code(404);
+            exit;
+        }
+
+        $mime = mime_content_type($filePath);
+        header('Content-Type: ' . $mime);
+        header('Content-Length: ' . filesize($filePath));
+        header('Cache-Control: private, max-age=3600');
+        readfile($filePath);
+        exit;
+    }
 }
