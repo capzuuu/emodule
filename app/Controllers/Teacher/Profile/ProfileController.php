@@ -36,6 +36,89 @@ class ProfileController extends Controller
         ]);
     }
 
+    public function serveProfilePicture()
+    {
+        $id   = (int) $_SESSION['user']['id'];
+        $user = $this->model->getById($id);
+
+        if (empty($user['profile_picture'])) {
+            http_response_code(404); exit;
+        }
+
+        $filePath = BASE_PATH . '/' . ltrim($user['profile_picture'], '/');
+
+        if (!file_exists($filePath)) {
+            http_response_code(404); exit;
+        }
+
+        $ext  = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        $mime = match($ext) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'png'         => 'image/png',
+            'gif'         => 'image/gif',
+            'webp'        => 'image/webp',
+            default       => 'application/octet-stream',
+        };
+
+        header('Content-Type: ' . $mime);
+        header('Content-Length: ' . filesize($filePath));
+        header('Cache-Control: private, max-age=86400');
+        header('X-Content-Type-Options: nosniff');
+        readfile($filePath);
+        exit;
+    }
+
+    public function uploadPicture()
+    {
+        $id = (int) $_SESSION['user']['id'];
+
+        if (empty($_FILES['profile_picture']['tmp_name'])) {
+            json_response(['status' => 'error', 'message' => 'No file uploaded.']);
+            return;
+        }
+
+        $file     = $_FILES['profile_picture'];
+        $allowed  = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $maxSize  = 2 * 1024 * 1024; // 2MB
+
+        if (!in_array($file['type'], $allowed)) {
+            json_response(['status' => 'error', 'message' => 'Only JPG, PNG, GIF, WEBP allowed.']);
+            return;
+        }
+
+        if ($file['size'] > $maxSize) {
+            json_response(['status' => 'error', 'message' => 'File must be under 2MB.']);
+            return;
+        }
+
+        $ext      = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'teacher_' . $id . '_' . time() . '.' . strtolower($ext);
+        $dir      = BASE_PATH . '/storage/images/';
+        $dest     = $dir . $filename;
+
+        // Delete old picture if exists
+        $user = $this->model->getById($id);
+        if (!empty($user['profile_picture'])) {
+            $old = $dir . basename($user['profile_picture']);
+            if (file_exists($old)) @unlink($old);
+        }
+
+        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+            json_response(['status' => 'error', 'message' => 'Failed to save file.']);
+            return;
+        }
+
+        $relativePath = 'storage/images/' . $filename;
+        $this->model->updatePicture($id, $relativePath);
+        $_SESSION['user']['profile_picture'] = $relativePath;
+
+        json_response([
+            'status'  => 'success',
+            'message' => 'Profile picture updated.',
+            'url'     => baseurl('/' . $relativePath),
+        ]);
+    }
+
     public function update()
     {
         $id    = (int) $_SESSION['user']['id'];

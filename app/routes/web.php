@@ -57,8 +57,8 @@ $router->post('/admin/departments/create', 'Admin\Departments\DepartmentsControl
 $router->post('/admin/departments/update', 'Admin\Departments\DepartmentsController@update');
 $router->post('/admin/departments/checkDuplicate', 'Admin\Departments\DepartmentsController@checkDuplicate');
 $router->post('/admin/departments/delete', 'Admin\Departments\DepartmentsController@delete');
-$router->get('/admin/departments/list', 'Admin\Departments\DepartmentsController@list'); // for loading departments into select elements (e.g. user management)
-$router->get('/admin/departments/summary', 'Admin\Departments\DepartmentsController@summary'); // for loading departments into select elements (e.g. user management)
+$router->get('/admin/departments/list', 'Admin\Departments\DepartmentsController@list');
+$router->get('/admin/departments/summary', 'Admin\Departments\DepartmentsController@summary');
 
 
 /*
@@ -81,6 +81,7 @@ $router->post('/admin/userAccounts/updateCredentials',  'Admin\UserAccounts\User
 */
 $router->get('/admin/progress',      'Admin\Progress\ProgressController@index');
 $router->get('/admin/progress/json', 'Admin\Progress\ProgressController@json');
+
 /*
 |--------------------------------------------------------------------------
 | ADMIN – MODULES
@@ -112,10 +113,11 @@ $router->post('/student/api/lesson/done',       'Student\StudentController@markL
 | STUDENT – PROFILE
 |--------------------------------------------------------------------------
 */
-$router->get('/student/profile',                 'Student\Profile\ProfileController@index');
-$router->post('/student/profile/update',         'Student\Profile\ProfileController@update');
-$router->post('/student/profile/change-password','Student\Profile\ProfileController@changePassword');
-
+$router->get('/student/profile',                  'Student\Profile\ProfileController@index');
+$router->post('/student/profile/update',          'Student\Profile\ProfileController@update');
+$router->post('/student/profile/change-password', 'Student\Profile\ProfileController@changePassword');
+$router->post('/student/profile/upload-picture',  'Student\Profile\ProfileController@uploadPicture');
+$router->get('/student/profile/picture',          'Student\Profile\ProfileController@serveProfilePicture');
 
 /*
 |--------------------------------------------------------------------------
@@ -125,6 +127,8 @@ $router->post('/student/profile/change-password','Student\Profile\ProfileControl
 $router->get('/teacher/profile',                'Teacher\Profile\ProfileController@index');
 $router->post('/teacher/profile/update',        'Teacher\Profile\ProfileController@update');
 $router->post('/teacher/profile/change-password','Teacher\Profile\ProfileController@changePassword');
+$router->post('/teacher/profile/upload-picture', 'Teacher\Profile\ProfileController@uploadPicture');
+$router->get('/teacher/profile/picture',         'Teacher\Profile\ProfileController@serveProfilePicture');
 
 $router->get('/teacher/dashboard', 'Teacher\Dashboard\TeacherController@index');
 $router->get('/teacher/modules',   'Teacher\Dashboard\TeacherController@modules');
@@ -175,6 +179,7 @@ $router->get('/admin/documents/view/(:any)', 'Admin\Documents\DocumentsControlle
 $router->get('/admin/documents/serve/(:any)', 'Admin\Documents\DocumentsController@serveFile');
 $router->post('/admin/documents/cancel/(:any)', 'Admin\Documents\DocumentsController@cancel');
 $router->post('/admin/documents/force-complete/(:any)', 'Admin\Documents\DocumentsController@forceComplete');
+
 /*
 |--------------------------------------------------------------------------
 | ADMIN – AUDIT TRAIL
@@ -182,6 +187,7 @@ $router->post('/admin/documents/force-complete/(:any)', 'Admin\Documents\Documen
 */
 $router->get('/admin/audit_trail', 'Admin\AuditTrail\AuditTrailController@index');
 $router->get('/admin/audit_trail/json', 'Admin\AuditTrail\AuditTrailController@json');
+
 /*
 |--------------------------------------------------------------------------
 | ADMIN – NOTIFICATIONS
@@ -307,10 +313,8 @@ $router->get('/employee/audit_trail/json', 'Employee\AuditTrail\AuditTrailContro
 | EMPLOYEES - SETTINGS
 |--------------------------------------------------------------------------
 */
-
 $router->get('/employee/settings', 'Employee\Settings\SettingsController@index');
 $router->post('/employee/settings/save', 'Employee\Settings\SettingsController@save');
-
 
 /*
 |--------------------------------------------------------------------------

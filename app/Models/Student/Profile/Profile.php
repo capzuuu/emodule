@@ -11,7 +11,7 @@ class Profile extends Model
     public function getById(int $id): ?array
     {
         $stmt = $this->query(
-            "SELECT id, name, email, role, created_at FROM {$this->table} WHERE id = ? LIMIT 1",
+            "SELECT id, name, email, role, created_at, profile_picture FROM {$this->table} WHERE id = ? LIMIT 1",
             [$id]
         );
         return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
@@ -46,6 +46,24 @@ class Profile extends Model
         return $this->query(
             "UPDATE {$this->table} SET password = ?, updated_at = NOW() WHERE id = ?",
             [$hash, $id]
+        )->rowCount() > 0;
+    }
+
+    public function getProfilePicturePath(int $id): ?string
+    {
+        $result = $this->query(
+            "SELECT profile_picture FROM {$this->table} WHERE id = ? LIMIT 1",
+            [$id]
+        )->fetchColumn();
+
+        return $result ?: null;
+    }
+
+    public function updateProfilePicture(int $id, string $path): bool
+    {
+        return $this->query(
+            "UPDATE {$this->table} SET profile_picture = ?, updated_at = NOW() WHERE id = ?",
+            [$path, $id]
         )->rowCount() > 0;
     }
 }

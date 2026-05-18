@@ -325,6 +325,61 @@ img { max-width: 100%; height: auto; }
 #mobile-bottom-nav .mbn-item.active i { background: var(--primary); color: #fff; border-radius: 10px; padding: 5px 12px; box-shadow: 0 4px 10px rgba(37,133,23,0.4); }
 #mobile-bottom-nav .mbn-item:hover:not(.active) { color: rgba(255,255,255,0.75); }
 
+/* ── MOBILE MORE DRAWER ── */
+#mbn-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 299;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(2px);
+}
+#mbn-overlay.open { display: block; }
+
+#mbn-drawer {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
+  transform: translateY(100%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+  background: var(--sidebar-bg);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
+  visibility: hidden;
+  pointer-events: none;
+}
+#mbn-drawer.open { transform: translateY(0); visibility: visible; pointer-events: all; }
+
+#mbn-drawer-inner { padding: 0 0 8px; }
+
+.mbn-drawer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: .78rem; font-weight: 700; color: rgba(255,255,255,0.5);
+  text-transform: uppercase; letter-spacing: .6px;
+}
+.mbn-drawer-header button {
+  background: none; border: none; color: rgba(255,255,255,0.5);
+  font-size: 1rem; cursor: pointer; padding: 4px; line-height: 1;
+  transition: color .15s;
+}
+.mbn-drawer-header button:hover { color: #fff; }
+
+.mbn-drawer-items { padding: 8px 12px; }
+
+.mbn-drawer-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px; border-radius: 10px;
+  color: rgba(255,255,255,0.65); text-decoration: none;
+  font-size: .85rem; font-weight: 600;
+  transition: background .15s, color .15s;
+  margin-bottom: 2px;
+}
+.mbn-drawer-item i { font-size: 1.1rem; flex-shrink: 0; width: 22px; text-align: center; }
+.mbn-drawer-item:hover,
+.mbn-drawer-item.active { background: rgba(255,255,255,0.08); color: #fff; }
+.mbn-drawer-item.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(37,133,23,0.35); }
+.mbn-drawer-logout { color: rgba(248,113,113,0.8) !important; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px !important; }
+.mbn-drawer-logout:hover { background: rgba(248,113,113,0.1) !important; color: #f87171 !important; }
+
 /* ════════════════════════════════════════════
    RESPONSIVE BREAKPOINTS
    ════════════════════════════════════════════ */
@@ -361,7 +416,6 @@ img { max-width: 100%; height: auto; }
   .topbar {
     top: 52px;
     padding: 8px 14px;
-    padding-top: 60px;
   }
   .topbar-date,
   .topbar-divider,
@@ -481,7 +535,7 @@ img { max-width: 100%; height: auto; }
   .stat-card   { padding: 8px; }
   .form-card   { padding: 10px 8px; }
   .table td, .table th { font-size: 0.65rem; padding: 4px 5px; }
-  .topbar { padding: 6px 10px; padding-top: 58px; }
+  .topbar { padding: 6px 10px; }
   .modal-body { padding: 10px 8px; }
   .modal-footer .btn { font-size: 0.78rem; padding: 6px 10px; }
   #mobile-bottom-nav .mbn-item { min-width: 38px; padding: 3px 4px; }

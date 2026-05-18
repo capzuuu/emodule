@@ -74,7 +74,9 @@
         <!-- Progress Table -->
         <div class="form-card">
           <h6 class="font-weight-bold mb-3" style="color:var(--primary);"><i class="bi bi-bar-chart-fill mr-2"></i>Module Progress</h6>
-          <div class="table-responsive">
+
+          <!-- Desktop Table -->
+          <div class="table-responsive d-none d-md-block">
             <table class="table table-hover mb-0">
               <thead>
                 <tr>
@@ -133,6 +135,53 @@
               </tbody>
             </table>
           </div>
+
+          <!-- Mobile Cards -->
+          <div class="d-md-none">
+            <?php if (empty($modules)): ?>
+              <p class="text-center text-muted py-4">No modules available yet.</p>
+            <?php endif; ?>
+            <?php foreach ($modules as $m): ?>
+            <div style="border:1px solid var(--divider);border-radius:10px;padding:14px;margin-bottom:10px;background:#fff;">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="badge badge-secondary" style="font-size:.7rem;">Unit <?= $m['unit_number'] ?></span>
+                <?php if ($m['status'] === 'completed'): ?>
+                  <span class="badge status-completed"><i class="bi bi-check-circle-fill mr-1"></i>Completed</span>
+                <?php elseif ($m['status'] === 'available'): ?>
+                  <span class="badge status-available"><i class="bi bi-play-circle-fill mr-1"></i>Available</span>
+                <?php else: ?>
+                  <span class="badge status-locked"><i class="bi bi-lock-fill mr-1"></i>Locked</span>
+                <?php endif; ?>
+              </div>
+              <div class="font-weight-bold mb-2" style="font-size:.875rem;"><?= htmlspecialchars($m['title']) ?></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.78rem;">
+                <div style="background:#f8f9fa;border-radius:6px;padding:6px 10px;">
+                  <div class="text-muted" style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Pre-Test</div>
+                  <div class="font-weight-bold" style="color:#4e73df;">
+                    <?= $m['pre_correct'] !== null ? (int)$m['pre_correct'].'/'.(int)$m['pre_count'] : '—' ?>
+                  </div>
+                </div>
+                <div style="background:#f8f9fa;border-radius:6px;padding:6px 10px;">
+                  <div class="text-muted" style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Post-Test</div>
+                  <div class="font-weight-bold" style="color:<?= $m['status'] === 'completed' ? '#059669' : '#e65100' ?>;">
+                    <?= $m['post_correct'] !== null ? (int)$m['post_correct'].'/'.(int)$m['post_count'] : '—' ?>
+                  </div>
+                </div>
+                <div style="background:#f8f9fa;border-radius:6px;padding:6px 10px;">
+                  <div class="text-muted" style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Attempts</div>
+                  <div class="font-weight-bold" style="color:#f6c23e;">
+                    <?= $m['quiz_attempts'] > 0 ? $m['quiz_attempts'] : '—' ?>
+                  </div>
+                </div>
+                <div style="background:#f8f9fa;border-radius:6px;padding:6px 10px;">
+                  <div class="text-muted" style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Completed</div>
+                  <div class="text-muted"><?= $m['completed_date'] ? date('M d, Y', strtotime($m['completed_date'])) : '—' ?></div>
+                </div>
+              </div>
+            </div>
+            <?php endforeach; ?>
+          </div>
+
         </div>
 
       </div>

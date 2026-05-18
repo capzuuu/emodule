@@ -20,6 +20,9 @@
           $role     = $user['role']       ?? 'student';
           $joined   = !empty($user['created_at']) ? date('F d, Y', strtotime($user['created_at'])) : '—';
           $initials = strtoupper(implode('', array_map(fn($w) => $w[0], array_slice(explode(' ', $name), 0, 2))));
+          $picUrl = !empty($user['profile_picture'])
+            ? baseurl('/student/profile/picture') . '?t=' . time()
+            : null;
         ?>
 
         <div class="row">
@@ -28,9 +31,21 @@
           <div class="col-lg-4 col-md-5 mb-4">
             <div class="form-card text-center">
 
-              <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#258517,#4F9516);color:#fff;font-size:1.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
-                <?= htmlspecialchars($initials) ?>
+              <!-- Profile picture upload -->
+              <div style="position:relative;width:90px;height:90px;margin:0 auto 14px;cursor:pointer;" id="avatarWrap" title="Click to change photo">
+                <?php if ($picUrl): ?>
+                  <img id="profilePicImg" src="<?= htmlspecialchars($picUrl) ?>" alt="Profile"
+                       style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #258517;pointer-events:none;">
+                <?php else: ?>
+                  <div id="profilePicInitials" style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#258517,#4F9516);color:#fff;font-size:1.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+                    <?= htmlspecialchars($initials) ?>
+                  </div>
+                <?php endif; ?>
+                <div style="position:absolute;bottom:2px;right:2px;width:26px;height:26px;border-radius:50%;background:#258517;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.3);">
+                  <i class="bi bi-camera-fill" style="font-size:.7rem;"></i>
+                </div>
               </div>
+              <input type="file" id="profilePicInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none;">
 
               <h5 class="font-weight-bold mb-1" id="profile-display-name"><?= htmlspecialchars($name) ?></h5>
               <div class="text-muted mb-2" style="font-size:0.82rem;"><?= htmlspecialchars($email) ?></div>
@@ -119,7 +134,7 @@
             </div>
 
             <!-- Change Password -->
-            <div class="form-card">
+            <div class="form-card mb-4">
               <div class="d-flex align-items-center mb-4" style="gap:12px;">
                 <div style="width:40px;height:40px;border-radius:10px;background:#fff8e1;display:flex;align-items:center;justify-content:center;">
                   <i class="bi bi-lock-fill" style="color:#e65100;font-size:1rem;"></i>
@@ -172,6 +187,42 @@
                   <i class="bi bi-lock mr-1"></i> Change Password
                 </button>
               </form>
+            </div>
+
+            <!-- Display Settings -->
+            <div class="form-card">
+              <div class="d-flex align-items-center mb-4" style="gap:12px;">
+                <div style="width:40px;height:40px;border-radius:10px;background:#eef2ff;display:flex;align-items:center;justify-content:center;">
+                  <i class="bi bi-type" style="color:#4e73df;font-size:1rem;"></i>
+                </div>
+                <div>
+                  <div class="font-weight-bold" style="font-size:0.95rem;">Display Settings</div>
+                  <div class="text-muted" style="font-size:0.78rem;">Adjust the font size across the interface</div>
+                </div>
+              </div>
+
+              <label class="font-weight-bold" style="font-size:.82rem;">Font Size</label>
+
+              <div class="fs-track-wrap" id="fsTrackWrap">
+                <div class="fs-track-fill" id="fsTrackFill"></div>
+                <div class="fs-bubble" id="fsBubble">100%</div>
+                <div class="fs-steps" id="fsSteps"></div>
+              </div>
+              <div class="fs-labels" id="fsLabels"></div>
+
+              <div class="mt-4 d-flex" style="gap:8px;">
+                <button type="button" id="applyFontBtn" class="btn btn-success font-weight-bold">
+                  <i class="bi bi-check-lg mr-1"></i> Apply
+                </button>
+                <button type="button" id="resetFontBtn" class="btn btn-light font-weight-bold">
+                  <i class="bi bi-arrow-counterclockwise mr-1"></i> Reset
+                </button>
+              </div>
+
+              <div class="mt-3 p-3 rounded" style="background:var(--bg-secondary,#f8f9fc);border:1px solid var(--divider,#e3e6f0);">
+                <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:6px;">Preview</div>
+                <div id="fontPreviewText">The quick brown fox jumps over the lazy dog.</div>
+              </div>
             </div>
 
           </div>
@@ -267,6 +318,102 @@ $(document).ready(function () {
         $btn.html('<i class="bi bi-lock mr-1"></i> Change Password').prop('disabled', false);
       }
     });
+  });
+
+  // ── Profile picture upload ──
+  $('#avatarWrap').on('click', function () { $('#profilePicInput').click(); });
+
+  $('#profilePicInput').on('change', function () {
+    var file = this.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) { notyf.error('File must be under 2MB.'); return; }
+
+    var formData = new FormData();
+    formData.append('profile_picture', file);
+
+    var $wrap = $('#avatarWrap');
+    $wrap.css('opacity', '.5');
+
+    $.ajax({
+      url: '<?= baseurl('/student/profile/upload-picture') ?>',
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      dataType: 'json',
+      success: function (res) {
+        if (res.status === 'success') {
+          notyf.success(res.message);
+          var serveUrl = '<?= baseurl('/student/profile/picture') ?>?t=' + Date.now();
+          if ($('#profilePicImg').length) {
+            $('#profilePicImg').attr('src', serveUrl);
+          } else {
+            $('#profilePicInitials').replaceWith(
+              '<img id="profilePicImg" src="' + serveUrl + '" alt="Profile" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #258517;pointer-events:none;">'
+            );
+          }
+        } else {
+          notyf.error(res.message);
+        }
+      },
+      error: function () { notyf.error('Upload failed. Try again.'); },
+      complete: function () { $wrap.css('opacity', '1'); }
+    });
+  });
+
+  // ── Font size step slider (25 / 50 / 85 / 100) ──
+  var FONT_KEY    = 'studentFontSize';
+  var STEPS       = [25, 50, 85, 100];
+  var DEFAULT_VAL = 100;
+  var PX_MAP      = { 25: 12, 50: 14, 85: 16, 100: 18 };
+  var current     = DEFAULT_VAL;
+
+  var $fill    = $('#fsTrackFill');
+  var $bubble  = $('#fsBubble');
+  var $steps   = $('#fsSteps');
+  var $labels  = $('#fsLabels');
+  var $preview = $('#fontPreviewText');
+
+  STEPS.forEach(function (val, i) {
+    $steps.append('<div class="fs-dot" data-val="' + val + '"></div>');
+    $labels.append('<span class="fs-label-item" data-val="' + val + '">' + val + '%</span>');
+  });
+
+  function posForIndex(i) { return (i / (STEPS.length - 1)) * 100; }
+
+  function updateUI(val) {
+    var idx = STEPS.indexOf(val);
+    if (idx === -1) idx = STEPS.indexOf(DEFAULT_VAL);
+    var pct = posForIndex(idx);
+    $fill.css('width', pct + '%');
+    $bubble.text(val + '%').css('left', pct + '%');
+    $('.fs-dot').each(function (i) { $(this).toggleClass('active', i <= idx); });
+    $('.fs-label-item').each(function () { $(this).toggleClass('active', parseInt($(this).data('val')) === val); });
+    $preview.css('font-size', PX_MAP[val] + 'px');
+  }
+
+  function applyFontSize(val) {
+    current = val;
+    $('html').css('font-size', PX_MAP[val] + 'px');
+    updateUI(val);
+  }
+
+  var saved = localStorage.getItem(FONT_KEY);
+  applyFontSize(saved !== null && STEPS.indexOf(parseInt(saved)) !== -1 ? parseInt(saved) : DEFAULT_VAL);
+
+  $(document).on('click', '.fs-dot',        function () { applyFontSize(parseInt($(this).data('val'))); });
+  $(document).on('click', '.fs-label-item', function () { applyFontSize(parseInt($(this).data('val'))); });
+
+  $('#applyFontBtn').on('click', function () {
+    localStorage.setItem(FONT_KEY, current);
+    notyf.success('Font size set to ' + current + '%.');
+  });
+
+  $('#resetFontBtn').on('click', function () {
+    localStorage.removeItem(FONT_KEY);
+    applyFontSize(DEFAULT_VAL);
+    notyf.success('Font size reset to ' + DEFAULT_VAL + '%.');
   });
 
 });

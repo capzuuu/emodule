@@ -13,9 +13,9 @@
         <!-- Welcome Banner -->
         <div class="d-flex align-items-center justify-content-between mb-4 p-3 rounded"
              style="background:linear-gradient(135deg,#258517,#396619);color:#fff;box-shadow:0 4px 20px rgba(37,133,23,0.25);">
-          <div>
+          <div style="min-width:0;">
             <div style="font-size:.65rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;opacity:.7;margin-bottom:4px;">Student Panel</div>
-            <h5 class="m-0 font-weight-bold">
+            <h5 class="m-0 font-weight-bold" style="font-size:clamp(.95rem,3vw,1.15rem);">
               <?php
                 $hour = (int)date('H');
                 $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
@@ -24,7 +24,7 @@
             </h5>
             <div style="font-size:.8rem;opacity:.85;">Keep learning — you're doing great!</div>
           </div>
-          <i class="bi bi-mortarboard-fill" style="font-size:2.5rem;opacity:.2;"></i>
+          <i class="bi bi-mortarboard-fill d-none d-sm-block" style="font-size:2.5rem;opacity:.2;flex-shrink:0;"></i>
         </div>
 
         <!-- Stat Cards -->
@@ -102,7 +102,9 @@
             <a href="<?= baseurl('/student/modules') ?>" class="small text-success" style="font-size:12px;">View All →</a>
           </div>
           <div class="card-body p-0">
-            <div class="table-responsive">
+
+            <!-- Desktop Table -->
+            <div class="table-responsive d-none d-md-block">
               <table class="table table-hover mb-0">
                 <thead>
                   <tr>
@@ -151,6 +153,46 @@
                 </tbody>
               </table>
             </div>
+
+            <!-- Mobile Cards -->
+            <div class="d-md-none p-3">
+              <?php if (empty($modules)): ?>
+                <p class="text-center text-muted py-3 mb-0">No modules available yet.</p>
+              <?php endif; ?>
+              <?php foreach ($modules as $m): ?>
+              <div style="border:1px solid var(--divider);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#fff;">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <span class="badge badge-secondary" style="font-size:.68rem;">Unit <?= $m['unit_number'] ?></span>
+                  <?php if ($m['status'] === 'completed'): ?>
+                    <span class="badge status-completed" style="font-size:.68rem;"><i class="bi bi-check-circle mr-1"></i>Completed</span>
+                  <?php elseif ($m['status'] === 'available'): ?>
+                    <span class="badge status-available" style="font-size:.68rem;"><i class="bi bi-play-circle mr-1"></i>Available</span>
+                  <?php else: ?>
+                    <span class="badge status-locked" style="font-size:.68rem;"><i class="bi bi-lock mr-1"></i>Locked</span>
+                  <?php endif; ?>
+                </div>
+                <div class="font-weight-bold mb-2" style="font-size:.875rem;"><?= htmlspecialchars($m['title']) ?></div>
+                <div class="d-flex align-items-center justify-content-between">
+                  <span style="font-size:.78rem;color:#5C6359;">
+                    Score:&nbsp;
+                    <?php if ($m['status'] === 'completed'): ?>
+                      <strong style="color:#059669;"><?= $m['quiz_score'] ?>%</strong>
+                    <?php else: ?>
+                      <span class="text-muted">—</span>
+                    <?php endif; ?>
+                  </span>
+                  <?php if ($m['status'] !== 'locked'): ?>
+                    <a href="<?= baseurl('/student/modules/' . $m['id']) ?>" class="btn btn-sm btn-success" style="font-size:.75rem;padding:4px 12px;">
+                      <?= $m['status'] === 'completed' ? 'Review' : 'Start' ?>
+                    </a>
+                  <?php else: ?>
+                    <button class="btn btn-sm btn-secondary" disabled style="font-size:.75rem;padding:4px 10px;"><i class="bi bi-lock"></i></button>
+                  <?php endif; ?>
+                </div>
+              </div>
+              <?php endforeach; ?>
+            </div>
+
           </div>
         </div>
 
