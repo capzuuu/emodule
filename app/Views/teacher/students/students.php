@@ -69,7 +69,7 @@ function sectionOptions(selected) {
 }
 
 function loadStudents() {
-  $.getJSON('<?= baseurl('/teacher/students/json') ?>', function(res) {
+  $.getJSON('<?= baseurl('/teacher/api/students') ?>', function(res) {
     var tbody = $('#studentsTbody');
     tbody.empty();
     if (!res.success || !res.data.length) {
@@ -97,7 +97,7 @@ $(document).ready(function() {
   loadStudents();
 
   $('#btnAssignStudent').on('click', function() {
-    $.getJSON('<?= baseurl('/teacher/students/unassigned') ?>', function(res) {
+    $.getJSON('<?= baseurl('/teacher/api/students/unassigned') ?>', function(res) {
       var opts = '<option value="">— Select student —</option>';
       (res.data||[]).forEach(function(s) { opts += '<option value="' + s.id + '">' + $('<span>').text(s.name + ' (' + s.email + ')').html() + '</option>'; });
       $('#assignStudentSelect').html(opts);
@@ -108,7 +108,7 @@ $(document).ready(function() {
   $('#assignForm').on('submit', function(e) {
     e.preventDefault();
     var payload = { student_user_id: parseInt($('#assignStudentSelect').val()), grade_id: parseInt($('#assignGrade').val())||null, section_id: parseInt($('#assignSection').val())||null };
-    $.ajax({ url: '<?= baseurl('/teacher/students/create') ?>', type: 'POST', contentType: 'application/json', data: JSON.stringify(payload), dataType: 'json',
+    $.ajax({ url: '<?= baseurl('/teacher/api/students/create') ?>', type: 'POST', contentType: 'application/json', data: JSON.stringify(payload), dataType: 'json',
       success: function(res) {
         if (res.success) { notyf.success(res.message); $('#assignModal').modal('hide'); loadStudents(); }
         else notyf.error(res.message);
@@ -121,7 +121,7 @@ $(document).ready(function() {
   $('#newStudentForm').on('submit', function(e) {
     e.preventDefault();
     var payload = { name: $('#nsName').val(), email: $('#nsEmail').val(), password: $('#nsPassword').val(), grade_id: parseInt($('#nsGrade').val())||null, section_id: parseInt($('#nsSection').val())||null };
-    $.ajax({ url: '<?= baseurl('/teacher/students/create-new') ?>', type: 'POST', contentType: 'application/json', data: JSON.stringify(payload), dataType: 'json',
+    $.ajax({ url: '<?= baseurl('/teacher/api/students/create-new') ?>', type: 'POST', contentType: 'application/json', data: JSON.stringify(payload), dataType: 'json',
       success: function(res) {
         if (res.success) { notyf.success(res.message); $('#newStudentModal').modal('hide'); loadStudents(); }
         else notyf.error(res.message);
@@ -140,7 +140,7 @@ $(document).ready(function() {
   $('#editStudentForm').on('submit', function(e) {
     e.preventDefault();
     var payload = { id: parseInt($('#editStudentId').val()), grade_id: parseInt($('#editGrade').val())||null, section_id: parseInt($('#editSection').val())||null };
-    $.ajax({ url: '<?= baseurl('/teacher/students/edit') ?>', type: 'POST', contentType: 'application/json', data: JSON.stringify(payload), dataType: 'json',
+    $.ajax({ url: '<?= baseurl('/teacher/api/students/edit') ?>', type: 'POST', contentType: 'application/json', data: JSON.stringify(payload), dataType: 'json',
       success: function(res) {
         if (res.success) { notyf.success(res.message); $('#editStudentModal').modal('hide'); loadStudents(); }
         else notyf.error(res.message);
@@ -151,7 +151,7 @@ $(document).ready(function() {
   $(document).on('click', '.btn-delete-student', function() {
     var id = $(this).data('id'), name = $(this).data('name');
     if (!confirm('Remove student "' + name + '" from your class?')) return;
-    $.ajax({ url: '<?= baseurl('/teacher/students/delete') ?>', type: 'POST', contentType: 'application/json', data: JSON.stringify({ id: id }), dataType: 'json',
+    $.ajax({ url: '<?= baseurl('/teacher/api/students/delete') ?>', type: 'POST', contentType: 'application/json', data: JSON.stringify({ id: id }), dataType: 'json',
       success: function(res) {
         if (res.success) { notyf.success(res.message); loadStudents(); }
         else notyf.error(res.message);

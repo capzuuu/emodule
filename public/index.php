@@ -74,7 +74,7 @@ function build_csp(string $nonce): string
         "base-uri 'self'",
         "form-action 'self'",
         "frame-ancestors 'none'",
-        "frame-src 'self'",
+        "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
     ];
 
     return 'Content-Security-Policy: ' . implode('; ', $policy) . ';';

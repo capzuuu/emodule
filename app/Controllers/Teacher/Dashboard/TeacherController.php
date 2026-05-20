@@ -147,6 +147,7 @@ class TeacherController extends Controller
             'answer'      => '',
             'unit_number' => $unitNumber,
             'file_path'   => $filePath,
+            'youtube_url' => trim($_POST['youtube_url'] ?? '') ?: null,
             'teacher_id'  => $this->userId,
         ]);
 
@@ -180,6 +181,7 @@ class TeacherController extends Controller
             'quiz'        => $existing['quiz']   ?? '',
             'answer'      => $existing['answer'] ?? '',
             'unit_number' => $unitNumber,
+            'youtube_url' => trim($input['youtube_url'] ?? '') ?: null,
         ]);
         json_response(['success' => true, 'message' => 'Module updated successfully.']);
     }

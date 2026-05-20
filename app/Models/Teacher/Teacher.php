@@ -56,16 +56,17 @@ class Teacher extends Model
     public function createModule(array $data): int
     {
         $this->query("
-            INSERT INTO modules (title, outcome, content, quiz, answer, unit_number, file_path, teacher_id, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            INSERT INTO modules (title, outcome, content, quiz, answer, unit_number, file_path, youtube_url, teacher_id, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
         ", [
             $data['title'],
-            $data['outcome']    ?? '',
+            $data['outcome']     ?? '',
             $data['content'],
-            $data['quiz']       ?? '',
-            $data['answer']     ?? '',
+            $data['quiz']        ?? '',
+            $data['answer']      ?? '',
             $data['unit_number'],
-            $data['file_path']  ?? null,
+            $data['file_path']   ?? null,
+            $data['youtube_url'] ?? null,
             $data['teacher_id'],
         ]);
         return (int)$this->db->lastInsertId();
@@ -74,15 +75,16 @@ class Teacher extends Model
     public function updateModule(int $id, int $userId, array $data): bool
     {
         return $this->query("
-            UPDATE modules SET title=?, outcome=?, content=?, quiz=?, answer=?, unit_number=?, updated_at=NOW()
+            UPDATE modules SET title=?, outcome=?, content=?, quiz=?, answer=?, unit_number=?, youtube_url=?, updated_at=NOW()
             WHERE id=? AND teacher_id=?
         ", [
             $data['title'],
-            $data['outcome']    ?? '',
+            $data['outcome']     ?? '',
             $data['content'],
-            $data['quiz']       ?? '',
-            $data['answer']     ?? '',
+            $data['quiz']        ?? '',
+            $data['answer']      ?? '',
             $data['unit_number'],
+            $data['youtube_url'] ?? null,
             $id,
             $userId,
         ])->rowCount() > 0;
@@ -211,8 +213,8 @@ class Teacher extends Model
     {
         return $this->query("
             SELECT u.id, u.name, u.email,
-                   g.id AS grade_id, g.name AS grade,
-                   sec.id AS section_id, sec.name AS section,
+                   g.id AS grade_id, g.name AS grade_name,
+                   sec.id AS section_id, sec.name AS section_name,
                    COUNT(DISTINCT up.module_id) AS completed_modules
             FROM users u
             INNER JOIN students s ON u.id = s.user_id

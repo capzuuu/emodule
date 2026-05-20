@@ -100,7 +100,7 @@ function questionHtml(type, idx, q) {
 }
 
 function loadQuestions(moduleId, type) {
-  $.getJSON('<?= baseurl('/teacher/tests/questions') ?>?module_id=' + moduleId + '&test_type=' + type, function(res) {
+  $.getJSON('<?= baseurl('/teacher/api/questions') ?>?module_id=' + moduleId + '&test_type=' + type, function(res) {
     var container = $('#' + type + 'Questions');
     container.empty();
     if (res.success && res.questions && res.questions.length) {
@@ -158,7 +158,7 @@ $(document).on('click', '.btn-save-questions', function() {
 
   var $btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-1"></span>Saving…');
   $.ajax({
-    url: '<?= baseurl('/teacher/tests/questions/save') ?>',
+    url: '<?= baseurl('/teacher/api/questions/save') ?>',
     type: 'POST', contentType: 'application/json',
     data: JSON.stringify(payload), dataType: 'json',
     success: function(res) {
