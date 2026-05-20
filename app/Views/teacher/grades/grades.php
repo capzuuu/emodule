@@ -60,7 +60,7 @@ var notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'bottom' } })
 var gradesData = [];
 
 function loadGrades() {
-  $.getJSON('<?= baseurl('/teacher/grades/json') ?>', function(res) {
+  $.getJSON('<?= baseurl('/teacher/api/grades') ?>', function(res) {
     gradesData = res.data || [];
     var tbody = $('#gradesTbody');
     tbody.empty();
@@ -78,7 +78,7 @@ function loadGrades() {
 }
 
 function loadSections() {
-  $.getJSON('<?= baseurl('/teacher/sections/json') ?>', function(res) {
+  $.getJSON('<?= baseurl('/teacher/api/sections') ?>', function(res) {
     var tbody = $('#sectionsTbody');
     tbody.empty();
     var data = res.data || [];
@@ -99,7 +99,7 @@ $(document).ready(function() {
   $('#gradeForm').on('submit', function(e) {
     e.preventDefault();
     var id = $('#gradeId').val(), name = $('#gradeNameInput').val();
-    var url = id ? '<?= baseurl('/teacher/grades/edit') ?>' : '<?= baseurl('/teacher/grades/create') ?>';
+    var url = id ? '<?= baseurl('/teacher/api/grades/edit') ?>' : '<?= baseurl('/teacher/api/grades/create') ?>';
     $.ajax({ url: url, type: 'POST', contentType: 'application/json', data: JSON.stringify({ id: id ? parseInt(id) : undefined, name: name }), dataType: 'json',
       success: function(res) { if (res.success) { notyf.success(res.message); $('#gradeModal').modal('hide'); loadGrades(); } else notyf.error(res.message); }
     });
@@ -109,7 +109,7 @@ $(document).ready(function() {
   });
   $(document).on('click', '.btn-delete-grade', function() {
     if (!confirm('Delete grade "' + $(this).data('name') + '"?')) return;
-    $.ajax({ url: '<?= baseurl('/teacher/grades/delete') ?>', type: 'POST', contentType: 'application/json', data: JSON.stringify({ id: $(this).data('id') }), dataType: 'json',
+    $.ajax({ url: '<?= baseurl('/teacher/api/grades/delete') ?>', type: 'POST', contentType: 'application/json', data: JSON.stringify({ id: $(this).data('id') }), dataType: 'json',
       success: function(res) { if (res.success) { notyf.success(res.message); loadGrades(); loadSections(); } else notyf.error(res.message); }
     });
   });
@@ -118,7 +118,7 @@ $(document).ready(function() {
   $('#sectionForm').on('submit', function(e) {
     e.preventDefault();
     var id = $('#sectionId').val(), name = $('#sectionNameInput').val(), gradeId = parseInt($('#sectionGrade').val())||null;
-    var url = id ? '<?= baseurl('/teacher/sections/edit') ?>' : '<?= baseurl('/teacher/sections/create') ?>';
+    var url = id ? '<?= baseurl('/teacher/api/sections/edit') ?>' : '<?= baseurl('/teacher/api/sections/create') ?>';
     $.ajax({ url: url, type: 'POST', contentType: 'application/json', data: JSON.stringify({ id: id ? parseInt(id) : undefined, name: name, grade_id: gradeId }), dataType: 'json',
       success: function(res) { if (res.success) { notyf.success(res.message); $('#sectionModal').modal('hide'); loadSections(); } else notyf.error(res.message); }
     });
@@ -128,7 +128,7 @@ $(document).ready(function() {
   });
   $(document).on('click', '.btn-delete-section', function() {
     if (!confirm('Delete section "' + $(this).data('name') + '"?')) return;
-    $.ajax({ url: '<?= baseurl('/teacher/sections/delete') ?>', type: 'POST', contentType: 'application/json', data: JSON.stringify({ id: $(this).data('id') }), dataType: 'json',
+    $.ajax({ url: '<?= baseurl('/teacher/api/sections/delete') ?>', type: 'POST', contentType: 'application/json', data: JSON.stringify({ id: $(this).data('id') }), dataType: 'json',
       success: function(res) { if (res.success) { notyf.success(res.message); loadSections(); } else notyf.error(res.message); }
     });
   });

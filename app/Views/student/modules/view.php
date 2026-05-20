@@ -198,6 +198,34 @@
               </div>
             <?php endif; ?>
 
+            <?php if (!empty($module['youtube_url'])):
+              // Convert any YouTube URL format to embed URL
+              $ytUrl = trim($module['youtube_url']);
+              $ytId  = null;
+              if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/', $ytUrl, $m)) {
+                  $ytId = $m[1];
+              }
+            ?>
+            <?php if ($ytId): ?>
+              <div style="margin-bottom:24px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                  <i class="bi bi-youtube" style="color:#dc2626;font-size:1.1rem;"></i>
+                  <span style="font-size:.82rem;font-weight:700;color:#1A1C19;">Video Lesson</span>
+                </div>
+                <div style="position:relative;width:100%;padding-bottom:56.25%;border-radius:14px;overflow:hidden;background:#000;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+                  <iframe
+                    src="https://www.youtube.com/embed/<?= htmlspecialchars($ytId) ?>?rel=0"
+                    style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                    loading="lazy"
+                    title="Video Lesson"
+                  ></iframe>
+                </div>
+              </div>
+            <?php endif; ?>
+            <?php endif; ?>
+
             <?php if (!empty($module['content'])): ?>
               <div style="white-space:pre-wrap;line-height:1.85;font-size:.9rem;"><?= nl2br(htmlspecialchars($module['content'])) ?></div>
             <?php endif; ?>

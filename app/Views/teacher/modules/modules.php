@@ -50,7 +50,7 @@
 var notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'bottom' } });
 
 function loadModules() {
-  $.getJSON('<?= baseurl('/teacher/modules/json') ?>', function(res) {
+  $.getJSON('<?= baseurl('/teacher/api/modules') ?>', function(res) {
     var tbody = $('#modulesTbody');
     tbody.empty();
     if (!res.success || !res.data.length) {
@@ -66,7 +66,7 @@ function loadModules() {
         '<td>' + (m.pre_count||0) + ' Q</td>' +
         '<td>' + (m.post_count||0) + ' Q</td>' +
         '<td>' +
-          '<button class="btn btn-sm btn-outline-primary mr-1 btn-edit-module" data-id="' + m.id + '" data-title="' + $('<span>').text(m.title).html() + '" data-outcome="' + $('<span>').text(m.outcome||'').html() + '" data-unit="' + m.unit_number + '"><i class="bi bi-pencil"></i></button>' +
+          '<button class="btn btn-sm btn-outline-primary mr-1 btn-edit-module" data-id="' + m.id + '" data-title="' + $('<span>').text(m.title).html() + '" data-outcome="' + $('<span>').text(m.outcome||'').html() + '" data-unit="' + m.unit_number + '" data-youtube="' + $('<span>').text(m.youtube_url||'').html() + '"><i class="bi bi-pencil"></i></button>' +
           '<button class="btn btn-sm btn-outline-danger btn-delete-module" data-id="' + m.id + '" data-title="' + $('<span>').text(m.title).html() + '"><i class="bi bi-trash"></i></button>' +
         '</td>' +
         '</tr>'
@@ -92,6 +92,7 @@ $(document).ready(function() {
     $('#moduleTitle').val($btn.data('title'));
     $('#moduleOutcome').val($btn.data('outcome'));
     $('#moduleUnit').val($btn.data('unit'));
+    $('#moduleYoutube').val($btn.data('youtube'));
     $('#moduleModal').modal('show');
   });
 
@@ -100,7 +101,7 @@ $(document).ready(function() {
     var title = $(this).data('title');
     if (!confirm('Delete module "' + title + '"? This cannot be undone.')) return;
     $.ajax({
-      url: '<?= baseurl('/teacher/modules/delete') ?>',
+      url: '<?= baseurl('/teacher/api/modules/delete') ?>',
       type: 'POST',
       contentType: 'application/json',
       data: JSON.stringify({ id: id }),
@@ -121,8 +122,9 @@ $(document).ready(function() {
       outcome:     $('#moduleOutcome').val(),
       content:     $('#moduleContent').val(),
       unit_number: parseInt($('#moduleUnit').val()),
+      youtube_url: $('#moduleYoutube').val().trim() || null,
     };
-    var url = id ? '<?= baseurl('/teacher/modules/edit') ?>' : '<?= baseurl('/teacher/modules/create') ?>';
+    var url = id ? '<?= baseurl('/teacher/api/modules/edit') ?>' : '<?= baseurl('/teacher/api/modules/create') ?>';
     var $btn = $('#moduleSaveBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-1"></span>Saving…');
 
     if (!id) {
@@ -173,6 +175,10 @@ $(document).ready(function() {
           <div class="form-group">
             <label class="font-weight-bold" style="font-size:.82rem;">Content</label>
             <textarea class="form-control" id="moduleContent" name="content" rows="6" required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="font-weight-bold" style="font-size:.82rem;">YouTube Link (optional)</label>
+            <input type="text" class="form-control" id="moduleYoutube" name="youtube_url" placeholder="https://www.youtube.com/watch?v=...">
           </div>
           <div class="form-group mb-0" id="fileGroup">
             <label class="font-weight-bold" style="font-size:.82rem;">Attach PDF (optional)</label>
