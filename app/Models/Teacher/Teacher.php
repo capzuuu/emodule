@@ -320,4 +320,47 @@ class Teacher extends Model
     {
         return $this->query("DELETE FROM sections WHERE id=?", [$id])->rowCount() > 0;
     }
+
+    public function getStudentProgress(int $teacherId, int $teacherUserId, ?int $studentId = null, ?int $moduleId = null, ?int $sectionId = null, ?int $gradeId = null): array
+    {
+        $sql = "
+            SELECT
+                u.id    AS student_id,
+                u.name  AS student_name,
+                m.id    AS module_id,
+                m.title AS module_title,
+                m.unit_number,
+                COALESCE(up.status, 'locked') AS status,
+                up.quiz_score,
+                up.quiz_attempts,
+                up.completed_date,
+                (SELECT COUNT(*) FROM quiz_questions WHERE module_id = m.id AND test_type = 'pre')  AS pre_count,
+                (SELECT COUNT(*) FROM quiz_questions WHERE module_id = m.id AND test_type = 'post') AS post_count,
+                (SELECT SUM(qa.answer = qq.correct_answer)
+                 FROM quiz_answers qa
+                 INNER JOIN quiz_questions qq ON qa.question_id = qq.id
+                 WHERE qa.user_id = u.id AND qa.module_id = m.id AND qa.test_type = 'pre') AS pre_correct,
+                (SELECT SUM(qa.answer = qq.correct_answer)
+                 FROM quiz_answers qa
+                 INNER JOIN quiz_questions qq ON qa.question_id = qq.id
+                 WHERE qa.user_id = u.id AND qa.module_id = m.id AND qa.test_type = 'post') AS post_correct
+            FROM users u
+            INNER JOIN students s ON u.id = s.user_id
+            INNER JOIN student_teacher st ON s.id = st.student_id AND st.teacher_id = ?
+            INNER JOIN modules m ON m.teacher_id = ?
+            LEFT JOIN user_progress up ON up.user_id = u.id AND up.module_id = m.id
+            LEFT JOIN student_grade_section sgs ON s.id = sgs.student_id
+            WHERE u.role = 'student'
+        ";
+        $params = [$teacherId, $teacherUserId];
+
+        if ($studentId) { $sql .= ' AND u.id = ?';           $params[] = $studentId; }
+        if ($moduleId)  { $sql .= ' AND m.id = ?';           $params[] = $moduleId; }
+        if ($sectionId) { $sql .= ' AND sgs.section_id = ?'; $params[] = $sectionId; }
+        if ($gradeId)   { $sql .= ' AND sgs.grade_id = ?';   $params[] = $gradeId; }
+
+        $sql .= ' ORDER BY u.name ASC, m.unit_number ASC';
+
+        return $this->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

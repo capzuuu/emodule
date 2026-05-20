@@ -90,10 +90,14 @@ class TeacherController extends Controller
     {
         $modules  = $this->model->getModules($this->userId);
         $students = $this->teacherId ? $this->model->getStudents($this->teacherId) : [];
+        $sections = $this->model->getSections();
+        $grades   = $this->model->getGrades();
         $this->view('teacher/progress/progress', [
             'pageTitle' => 'Track Progress',
             'modules'   => $modules,
             'students'  => $students,
+            'sections'  => $sections,
+            'grades'    => $grades,
             'userName'  => $_SESSION['user']['full_name'],
         ]);
     }
@@ -415,6 +419,22 @@ class TeacherController extends Controller
         if (!$id) { json_response(['success' => false, 'message' => 'Invalid ID.']); return; }
         $this->model->deleteGrade($id);
         json_response(['success' => true, 'message' => 'Grade deleted.']);
+    }
+
+    // ── Progress JSON ──
+    public function progressJson()
+    {
+        $studentId = (int)($_GET['student_id'] ?? 0) ?: null;
+        $moduleId  = (int)($_GET['module_id']  ?? 0) ?: null;
+        $sectionId = (int)($_GET['section_id'] ?? 0) ?: null;
+        $gradeId   = (int)($_GET['grade_id']   ?? 0) ?: null;
+
+        if (!$this->teacherId) {
+            $this->teacherId = $this->model->ensureTeacherRecord($this->userId);
+        }
+
+        $data = $this->model->getStudentProgress($this->teacherId, $this->userId, $studentId, $moduleId, $sectionId, $gradeId);
+        json_response(['success' => true, 'data' => $data]);
     }
 
     // ── Sections ──

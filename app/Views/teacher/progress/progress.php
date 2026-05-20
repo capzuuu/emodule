@@ -18,7 +18,25 @@
         <!-- Filters -->
         <div class="form-card mb-4">
           <div class="row">
-            <div class="col-md-4 mb-2 mb-md-0">
+            <div class="col-md-2 mb-2 mb-md-0">
+              <label class="font-weight-bold" style="font-size:.82rem;">Grade</label>
+              <select class="form-control" id="filterGrade">
+                <option value="">All Grades</option>
+                <?php foreach ($grades as $g): ?>
+                  <option value="<?= $g['id'] ?>"><?= htmlspecialchars($g['name']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-md-2 mb-2 mb-md-0">
+              <label class="font-weight-bold" style="font-size:.82rem;">Section</label>
+              <select class="form-control" id="filterSection">
+                <option value="">All Sections</option>
+                <?php foreach ($sections as $sec): ?>
+                  <option value="<?= $sec['id'] ?>"><?= htmlspecialchars($sec['name']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-md-3 mb-2 mb-md-0">
               <label class="font-weight-bold" style="font-size:.82rem;">Student</label>
               <select class="form-control" id="filterStudent">
                 <option value="">All Students</option>
@@ -27,7 +45,7 @@
                 <?php endforeach; ?>
               </select>
             </div>
-            <div class="col-md-4 mb-2 mb-md-0">
+            <div class="col-md-3 mb-2 mb-md-0">
               <label class="font-weight-bold" style="font-size:.82rem;">Module</label>
               <select class="form-control" id="filterModule">
                 <option value="">All Modules</option>
@@ -36,7 +54,7 @@
                 <?php endforeach; ?>
               </select>
             </div>
-            <div class="col-md-4 d-flex align-items-end">
+            <div class="col-md-2 d-flex align-items-end">
               <button class="btn btn-success font-weight-bold w-100" id="btnFilter">
                 <i class="bi bi-funnel mr-1"></i> Filter
               </button>
@@ -84,7 +102,9 @@ var notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'bottom' } })
 $('#btnFilter').on('click', function() {
   var studentId = $('#filterStudent').val();
   var moduleId  = $('#filterModule').val();
-  var url = '<?= baseurl('/teacher/progress/json') ?>?student_id=' + studentId + '&module_id=' + moduleId;
+  var sectionId = $('#filterSection').val();
+  var gradeId   = $('#filterGrade').val();
+  var url = '<?= baseurl('/teacher/api/progress') ?>?student_id=' + studentId + '&module_id=' + moduleId + '&section_id=' + sectionId + '&grade_id=' + gradeId;
   var $btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-1"></span>Loading…');
 
   $.getJSON(url, function(res) {
