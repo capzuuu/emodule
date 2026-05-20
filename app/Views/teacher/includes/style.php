@@ -21,7 +21,8 @@
   .sidebar-header .school-name { font-size:0.72rem; font-weight:700; color:#fff; margin:0 0 4px; line-height:1.3; }
   .sidebar-header .role-badge { background:rgba(249,168,37,0.18); color:var(--accent); font-size:0.6rem; font-weight:700; padding:2px 8px; border-radius:20px; letter-spacing:0.6px; text-transform:uppercase; display:inline-block; margin-bottom:4px; }
   .sidebar-header .user-name { color:rgba(255,255,255,0.45); font-size:0.68rem; }
-  .sidebar-nav { flex:1; padding:6px 8px; overflow-y:auto; }
+  .sidebar-nav { flex:1; padding:6px 8px; overflow-y:auto; scrollbar-width:none; -ms-overflow-style:none; }
+  .sidebar-nav::-webkit-scrollbar { display:none; }
   .nav-label { font-size:0.58rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:rgba(255,255,255,0.3); padding:10px 6px 3px; display:block; }
   .sidebar-nav a { display:flex; align-items:center; gap:8px; padding:7px 10px; color:rgba(255,255,255,0.55); text-decoration:none; border-radius:8px; font-size:0.78rem; font-weight:500; margin-bottom:1px; transition:0.18s; }
   .sidebar-nav a i { font-size:0.85rem; flex-shrink:0; }
