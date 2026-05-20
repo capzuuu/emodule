@@ -136,6 +136,7 @@ $router->get('/teacher/tests',     'Teacher\Dashboard\TeacherController@tests');
 $router->get('/teacher/students',  'Teacher\Dashboard\TeacherController@students');
 $router->get('/teacher/grades',    'Teacher\Dashboard\TeacherController@grades');
 $router->get('/teacher/progress',  'Teacher\Dashboard\TeacherController@progress');
+$router->get('/teacher/api/progress', 'Teacher\Dashboard\TeacherController@progressJson');
 // Teacher AJAX endpoints
 $router->get('/teacher/api/modules', 'Teacher\Dashboard\TeacherController@modulesJson');
 $router->post('/teacher/api/modules/create', 'Teacher\Dashboard\TeacherController@moduleCreate');
