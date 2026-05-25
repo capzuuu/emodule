@@ -217,6 +217,7 @@ class TeacherController extends Controller
                 'success'      => true,
                 'questions'    => $this->model->getQuestions($moduleId, $testType),
                 'passing_rate' => $this->model->getPassingRate($moduleId),
+                'time_limit'   => $this->model->getTimeLimit($moduleId, $testType),
             ]);
         } else {
             json_response([
@@ -259,6 +260,14 @@ class TeacherController extends Controller
         // Save passing rate only for post-test
         if ($testType === 'post' && $passingRate !== null) {
             $this->model->savePassingRate($moduleId, $passingRate);
+        }
+
+        // Save time limit for both test types
+        $timeLimit = isset($input['time_limit']) && $input['time_limit'] !== '' ? (int)$input['time_limit'] : null;
+        if ($timeLimit !== null && $timeLimit > 0) {
+            $this->model->saveTimeLimit($moduleId, $testType, $timeLimit);
+        } else {
+            $this->model->saveTimeLimit($moduleId, $testType, null);
         }
 
         json_response(['success' => true, 'message' => ucfirst($testType) . '-test saved successfully.']);
