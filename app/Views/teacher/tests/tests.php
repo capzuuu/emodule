@@ -50,6 +50,11 @@
                   </button>
                 </div>
 
+                <div class="form-group mb-3">
+                  <label class="font-weight-bold" style="font-size:.82rem;">Time Limit (minutes) <span class="text-muted font-weight-normal">— leave blank for no limit</span></label>
+                  <input type="number" class="form-control time-limit-input" id="timeLimit_<?= $type ?>" min="1" style="max-width:160px;" placeholder="e.g. 30">
+                </div>
+
                 <?php if ($type === 'post'): ?>
                 <div class="form-group mb-3">
                   <label class="font-weight-bold" style="font-size:.82rem;">Passing Rate (%)</label>
@@ -109,6 +114,7 @@ function loadQuestions(moduleId, type) {
     if (type === 'post' && res.passing_rate) {
       $('#passingRate').val(res.passing_rate);
     }
+    $('#timeLimit_' + type).val(res.time_limit || '');
   });
 }
 
@@ -155,6 +161,8 @@ $(document).on('click', '.btn-save-questions', function() {
 
   var payload = { module_id: parseInt(currentModuleId), test_type: type, questions: questions };
   if (type === 'post') payload.passing_rate = parseInt($('#passingRate').val()) || null;
+  var timeLimitVal = $('#timeLimit_' + type).val();
+  payload.time_limit = timeLimitVal !== '' ? parseInt(timeLimitVal) : '';
 
   var $btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-1"></span>Saving…');
   $.ajax({

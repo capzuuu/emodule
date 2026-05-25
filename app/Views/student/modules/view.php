@@ -78,6 +78,10 @@
   .result-score-circle { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 900; margin: 0 auto 16px; }
   .result-score-circle.pass { background: linear-gradient(135deg,#d1fae5,#a7f3d0); color: #059669; }
   .result-score-circle.fail { background: linear-gradient(135deg,#fef3c7,#fde68a); color: #d97706; }
+  .quiz-timer { display:inline-flex; align-items:center; gap:6px; font-size:.82rem; font-weight:700; padding:6px 14px; border-radius:20px; background:#f0fdf4; color:#258517; border:1.5px solid #a7f3d0; transition:.3s; }
+  .quiz-timer.warning { background:#fef3c7; color:#d97706; border-color:#fde68a; }
+  .quiz-timer.danger  { background:#fef2f2; color:#dc2626; border-color:#fca5a5; animation:timerPulse .6s infinite; }
+  @keyframes timerPulse { 0%,100%{opacity:1} 50%{opacity:.6} }
 </style>
 
 <body>
@@ -315,7 +319,12 @@
                 <div class="quiz-header-title"><i class="bi bi-clipboard-check mr-2" style="color:#258517;"></i>Pre-Test</div>
                 <div class="quiz-counter"><span id="pre-q-current">1</span> of <?= count($preQuestions) ?> questions</div>
               </div>
-
+              <?php if (!empty($preTimeLimit)): ?>
+              <div class="quiz-timer" id="pre-timer">
+                <i class="bi bi-clock"></i>
+                <span id="pre-timer-display">--:--</span>
+              </div>
+              <?php endif; ?>
             </div>
 
             <!-- Progress bar -->
@@ -420,7 +429,12 @@
                 <div class="quiz-header-title"><i class="bi bi-clipboard-data mr-2" style="color:#258517;"></i>Post-Test</div>
                 <div class="quiz-counter"><span id="post-q-current">1</span> of <?= count($shuffledPost) ?> questions</div>
               </div>
-
+              <?php if (!empty($postTimeLimit)): ?>
+              <div class="quiz-timer" id="post-timer">
+                <i class="bi bi-clock"></i>
+                <span id="post-timer-display">--:--</span>
+              </div>
+              <?php endif; ?>
             </div>
 
             <!-- Progress bar -->
@@ -475,8 +489,58 @@ var lessonDone  = <?= $lessonDone  ? 'true' : 'false' ?>;
 var preDone     = <?= $preDone     ? 'true' : 'false' ?>;
 var hasPost     = <?= !empty($postQuestions) ? 'true' : 'false' ?>;
 var hasPre      = <?= !empty($preQuestions)  ? 'true' : 'false' ?>;
+var preTimeLimitSec  = <?= !empty($preTimeLimit)  ? (int)$preTimeLimit  * 60 : 'null' ?>;
+var postTimeLimitSec = <?= !empty($postTimeLimit) ? (int)$postTimeLimit * 60 : 'null' ?>;
 
 $(document).ready(function () {
+
+  // ── Countdown timer ──
+  var timerIntervals = {};
+
+  function startTimer(type, totalSeconds) {
+    if (!totalSeconds) return;
+    var storageKey = 'timer_' + type + '_' + moduleId;
+    var now        = Math.floor(Date.now() / 1000);
+    var startedAt  = localStorage.getItem(storageKey);
+
+    if (!startedAt) {
+      startedAt = now;
+      localStorage.setItem(storageKey, startedAt);
+    } else {
+      startedAt = parseInt(startedAt);
+    }
+
+    var $display = $('#' + type + '-timer-display');
+    var $wrap    = $('#' + type + '-timer');
+
+    function tick() {
+      var elapsed   = Math.floor(Date.now() / 1000) - startedAt;
+      var remaining = totalSeconds - elapsed;
+
+      if (remaining <= 0) {
+        clearInterval(timerIntervals[type]);
+        localStorage.removeItem(storageKey);
+        $display.text('00:00');
+        $wrap.removeClass('warning').addClass('danger');
+        notyf.error('Time is up! Submitting automatically...');
+        if (type === 'pre')  submitTest('pre',  'submitPreBtn',  'pretest-questions',  'pre-result',  true);
+        if (type === 'post') submitTest('post', 'submitPostBtn', 'posttest-questions', 'post-result', true);
+        return;
+      }
+
+      var m = Math.floor(remaining / 60);
+      var s = remaining % 60;
+      $display.text((m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s);
+      $wrap.removeClass('warning danger');
+      if (remaining <= 60)       $wrap.addClass('danger');
+      else if (remaining <= 180) $wrap.addClass('warning');
+    }
+    tick();
+    timerIntervals[type] = setInterval(tick, 1000);
+  }
+
+  if (preTimeLimitSec)  startTimer('pre',  preTimeLimitSec);
+  if (postTimeLimitSec) startTimer('post', postTimeLimitSec);
 
   // ── Tab switching — respect locked state ──
   $('.module-tab').on('click', function () {
@@ -542,14 +606,14 @@ $(document).ready(function () {
     $card.addClass('answered');
   });
 
-  function submitTest(testType, btnId, containerId, resultId) {
+  function submitTest(testType, btnId, containerId, resultId, force) {
     var answers = {};
     $('#' + containerId + ' .question-card').each(function () {
       var sel = $(this).find('.option-row.selected').data('value');
       if (sel) answers[$(this).data('qid')] = sel;
     });
     var total = $('#' + containerId + ' .question-card').length;
-    if (Object.keys(answers).length < total) {
+    if (!force && Object.keys(answers).length < total) {
       notyf.error('Please answer all questions before submitting.');
       return;
     }
@@ -563,6 +627,11 @@ $(document).ready(function () {
       success: function (res) {
         if (!res.success) { notyf.error(res.message); return; }
         var passed = res.passed !== undefined ? res.passed : (res.score >= 50);
+
+        // Stop the timer for this test type
+        if (timerIntervals[testType]) { clearInterval(timerIntervals[testType]); }
+        localStorage.removeItem('timer_' + testType + '_' + moduleId);
+        $('#' + testType + '-timer').hide();
 
         $('#' + containerId + ' .option-row').css('pointer-events', 'none');
         $('#' + btnId).hide();
@@ -674,6 +743,9 @@ $(document).ready(function () {
   // Reset post-test navigation on retry with re-shuffle
   $(document).on('click', '#retryPostBtn', function () {
     $('#post-result').hide();
+    localStorage.removeItem('timer_post_' + moduleId);
+    if (postTimeLimitSec) startTimer('post', postTimeLimitSec);
+    $('#post-timer').show();
     var $container = $('#posttest-questions');
     var cards = $container.find('.question-card').toArray();
     for (var i = cards.length - 1; i > 0; i--) {

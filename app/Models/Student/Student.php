@@ -231,6 +231,15 @@ class Student extends Model
         )->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    public function getTimeLimit(int $moduleId, string $testType): ?int
+    {
+        $val = $this->query(
+            "SELECT time_limit_minutes FROM quiz_questions WHERE module_id = ? AND test_type = ? LIMIT 1",
+            [$moduleId, $testType]
+        )->fetchColumn();
+        return ($val !== false && $val !== null) ? (int)$val : null;
+    }
+
     public function saveAnswers(int $userId, int $moduleId, string $testType, array $answers): void
     {
         // Ensure table exists

@@ -140,6 +140,23 @@ class Teacher extends Model
         );
     }
 
+    public function getTimeLimit(int $moduleId, string $testType): ?int
+    {
+        $val = $this->query(
+            "SELECT time_limit_minutes FROM quiz_questions WHERE module_id = ? AND test_type = ? LIMIT 1",
+            [$moduleId, $testType]
+        )->fetchColumn();
+        return $val !== false && $val !== null ? (int)$val : null;
+    }
+
+    public function saveTimeLimit(int $moduleId, string $testType, ?int $minutes): void
+    {
+        $this->query(
+            "UPDATE quiz_questions SET time_limit_minutes = ? WHERE module_id = ? AND test_type = ?",
+            [$minutes, $moduleId, $testType]
+        );
+    }
+
     public function saveQuestions(int $moduleId, string $testType, array $questions): void
     {
         $this->query("DELETE FROM quiz_questions WHERE module_id = ? AND test_type = ?", [$moduleId, $testType]);

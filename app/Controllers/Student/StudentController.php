@@ -69,6 +69,9 @@ class StudentController extends Controller
         $preQuestions  = $this->model->getQuestions($moduleId, 'pre');
         $postQuestions = $this->model->getQuestions($moduleId, 'post');
 
+        $preTimeLimit  = !empty($preQuestions)  ? $this->model->getTimeLimit($moduleId, 'pre')  : null;
+        $postTimeLimit = !empty($postQuestions) ? $this->model->getTimeLimit($moduleId, 'post') : null;
+
         // Always check if pre-test was submitted (needed for unlock logic)
         $preDoneMap = $this->model->getPreTestDoneMap($this->userId, [$moduleId]);
         $preDone    = $preDoneMap[$moduleId] ?? false;
@@ -92,6 +95,8 @@ class StudentController extends Controller
             'preAnswers'    => $preAnswers,
             'postAnswers'   => $postAnswers,
             'progress'      => $progress,
+            'preTimeLimit'  => $preTimeLimit,
+            'postTimeLimit' => $postTimeLimit,
         ]);
     }
 

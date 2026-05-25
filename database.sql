@@ -586,12 +586,14 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
     option_c VARCHAR(255) NOT NULL,
     option_d VARCHAR(255) NOT NULL,
     correct_answer ENUM('A', 'B', 'C', 'D') NOT NULL,
+    time_limit_minutes INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (module_id) REFERENCES modules (id) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 -- Run this if the table already exists:
 -- ALTER TABLE quiz_questions ADD COLUMN IF NOT EXISTS test_type ENUM('pre','post') NOT NULL DEFAULT 'pre' AFTER module_id;
+-- ALTER TABLE quiz_questions ADD COLUMN IF NOT EXISTS time_limit_minutes INT DEFAULT NULL;
 
 CREATE TABLE IF NOT EXISTS grades (
     id INT PRIMARY KEY AUTO_INCREMENT,
